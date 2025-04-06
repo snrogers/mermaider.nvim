@@ -10,7 +10,6 @@ A Neovim plugin for rendering [Mermaid.js](https://mermaid.js.org/) diagrams dir
 ## Requirements
 
 - npx (for mermaid-cli)
-- [mermaid-cli](https://github.com/mermaid-js/mermaid-cli)
 - [image.nvim](https://github.com/3rd/image.nvim)
 
 ## Installation
