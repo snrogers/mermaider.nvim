@@ -1,0 +1,5 @@
+files.*.xml
+.f2x
+.f2xignore
+.DS_Store
+CLAUDE.md
