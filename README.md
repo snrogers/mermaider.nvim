@@ -6,16 +6,12 @@ A Neovim plugin for rendering [Mermaid.js](https://mermaid.js.org/) diagrams dir
 
 - Auto-renders diagrams on save or when requested
 - Displays diagrams using [image.nvim](https://github.com/3rd/image.nvim) for in-editor visualization
-- Supports custom rendering options and themes
-- Splits view to show diagram alongside code
-- Built-in filetype detection and syntax highlighting for .mmd files
 
 ## Requirements
 
-- Neovim 0.7.0+
-- Node.js and npm (for mermaid-cli)
-- [mermaid-cli](https://github.com/mermaid-js/mermaid-cli) (`npm install -g @mermaid-js/mermaid-cli`)
-- [image.nvim](https://github.com/3rd/image.nvim) for in-editor image display (required)
+- npx (for mermaid-cli)
+- [mermaid-cli](https://github.com/mermaid-js/mermaid-cli)
+- [image.nvim](https://github.com/3rd/image.nvim)
 
 ## Installation
 
@@ -26,8 +22,7 @@ Add to your `lua/plugins/` directory:
 ```lua
 -- lua/plugins/mermaider.lua
 return {
-  "mermaider",
-  dir = vim.fn.stdpath("config") .. "/lua/mermaider",
+  "snrogers/mermaider.nvim",
   dependencies = {
     "3rd/image.nvim", -- Required for image display
   },
