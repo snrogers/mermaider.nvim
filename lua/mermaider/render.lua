@@ -2,12 +2,14 @@
 -- Rendering logic for Mermaider
 
 local M = {}
-local uv = vim.uv or vim.loop
+
+local uv  = vim.uv
 local api = vim.api
-local files = require("mermaider.files")
+
+local files    = require("mermaider.files")
 local commands = require("mermaider.commands")
-local status = require("mermaider.status")
-local utils = require("mermaider.utils")
+local status   = require("mermaider.status")
+local utils    = require("mermaider.utils")
 
 -- Table to keep track of active render jobs
 local active_jobs = {}

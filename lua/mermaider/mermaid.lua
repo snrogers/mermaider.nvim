@@ -31,9 +31,9 @@ function M.preview_diagram(bufnr, image_path, config)
       local split_width = config.split_width or 50
       local preview_buf, preview_win = ui.get_or_create_preview_window(split_direction, split_width)
 
-      local win_width = api.nvim_win_get_width(preview_win)
-      local win_height = api.nvim_win_get_height(preview_win)
-      local image_width = win_width * 10
+      local win_width    = api.nvim_win_get_width(preview_win)
+      local win_height   = api.nvim_win_get_height(preview_win)
+      local image_width  = win_width * 10
       local image_height = win_height * 20
 
       api.nvim_buf_set_lines(preview_buf, 0, -1, false, { "" })

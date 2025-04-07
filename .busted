@@ -1,0 +1,20 @@
+-- .busted
+-- Configuration for the busted test framework
+
+return {
+  _all = {
+    coverage = true,
+    lpath    = "./lua/?.lua;./spec/?.lua;",
+    output   = "utfTerminal",
+    verbose  = true,
+  },
+  default = {
+    ROOT = {"spec/"},
+    pattern = "_spec"
+  },
+  verbose = {
+    ROOT = {"spec/"},
+    pattern = "_spec",
+    verbose = true
+  }
+}

@@ -1,0 +1,143 @@
+==============================================================================
+lua/mermaider/buffer.lua
+==============================================================================
+     -- lua/mermaider/buffer.lua
+     -- Text analysis for extracting mermaid diagrams from text content
+
+   5 local M = {}
+
+     -- Block info data structure
+     -- @class ChartInfo
+     -- @field content string: the mermaid chart content
+     -- @field start_line number: starting line in the text (0-indexed)
+     -- @field end_line number: ending line in the text (0-indexed)
+     -- @field ft string: detected filetype of the source
+
+     -- Extract mermaid code blocks using tree-sitter from markdown text
+     -- @param text string: text content to extract from
+     -- @param filetype string: filetype of the text content
+     -- @return table: list of ChartInfo objects
+   1 function M.get_mermaid_chart_info(text, filetype)
+  32   if not text or text == "" then
+  25     return {}
+       end
+
+       -- If filetype is mermaid, treat the entire text as a diagram
+ 406   if filetype == "mermaid" or filetype == "mmd" then
+         -- Count lines in text
+   1     local line_count = 0
+  27     for _ in string.gmatch(text.."\n", "(.-)\n") do
+  26       line_count = line_count + 1
+         end
+
+ 421     return {
+ 399       {
+   1         content = text,
+ 400         start_line = 0,
+   1         end_line = line_count - 1,
+ 232         ft = filetype
+  42       }
+  43     }
+       end
+
+       -- For non-mermaid files, assuming tree-sitter is available
+       -- This is where you would integrate tree-sitter parsing
+       -- For now, using the regex approach for backward compatibility
+       
+  48   local charts = {}
+  48   local lines = {}
+
+       -- Split text into lines
+ 162   for line in string.gmatch(text.."\n", "(.-)\n") do
+ 156     table.insert(lines, line)
+       end
+
+  48   local in_mermaid_block = false
+   6   local current_block = {}
+   6   local start_line = 0
+
+ 120   for i, line in ipairs(lines) do
+ 114     local line_idx = i - 1 -- Convert to 0-indexed
+
+ 114     if not in_mermaid_block then
+           -- Check for start of mermaid block
+  87       if line:match("^%s*```%s*mermaid%s*$") then
+  12         in_mermaid_block = true
+  12         current_block = {}
+  12         start_line = line_idx + 1 -- Start after the ```mermaid line
+           end
+         else
+           -- Check for end of mermaid block
+  48       if line:match("^%s*```%s*$") then
+  12         in_mermaid_block = false
+  12         if #current_block > 0 then
+  33           local content = table.concat(current_block, "\n")
+  28           table.insert(charts, {
+  17             content = content,
+  12             start_line = start_line,
+  12             end_line = line_idx - 1, -- End before the ``` line
+  12             ft = "markdown"
+               })
+             end
+           else
+             -- Add line to current block
+  37         table.insert(current_block, line)
+           end
+         end
+       end
+
+       -- Handle case where text ends without closing the code block
+  24   if in_mermaid_block and #current_block > 0 then
+  15     local content = table.concat(current_block, "\n")
+***0     table.insert(charts, {
+   4       content = content,
+   4       start_line = start_line,
+           end_line = #lines - 1, -- End at last line
+   3       ft = "markdown"
+   3     })
+       end
+
+   7   return charts
+     end
+
+     -- Find the mermaid chart at a given position
+     -- @param text string: text content to search in
+     -- @param position number: line position in the text (0-indexed)
+     -- @param filetype string: optional filetype of the text content
+     -- @return ChartInfo|nil: chart info if found, nil otherwise
+   1 function M.get_chart_at_position(text, position, filetype)
+   6   if not text or text == "" or not position then
+***0     return nil
+       end
+
+  11   local charts = M.get_mermaid_chart_info(text, filetype)
+
+  10   for _, chart in ipairs(charts) do
+  14     if position >= chart.start_line and position <= chart.end_line then
+   8       return chart
+         end
+       end
+
+   7   return nil
+     end
+
+     -- Check if a position is inside a mermaid chart
+     -- @param text string: text content to search in
+     -- @param position number: line position in the text (0-indexed)
+     -- @param filetype string: optional filetype of the text content
+     -- @return boolean: true if position is in a mermaid chart
+  22 function M.is_position_in_chart(text, position, filetype)
+   9   return M.get_chart_at_position(text, position, filetype) ~= nil
+     end
+
+   6 return M
+
+==============================================================================
+Summary
+==============================================================================
+
+File                     Hits Missed Coverage
+---------------------------------------------
+lua/mermaider/buffer.lua 57   2      96.61%
+---------------------------------------------
+Total                    57   2      96.61%
