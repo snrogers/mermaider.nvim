@@ -40,7 +40,7 @@ function M.get_mermaid_chart_info(text, filetype)
   -- For non-mermaid files, assuming tree-sitter is available
   -- This is where you would integrate tree-sitter parsing
   -- For now, using the regex approach for backward compatibility
-  
+
   local charts = {}
   local lines = {}
 
@@ -95,36 +95,6 @@ function M.get_mermaid_chart_info(text, filetype)
   end
 
   return charts
-end
-
--- Find the mermaid chart at a given position
--- @param text string: text content to search in
--- @param position number: line position in the text (0-indexed)
--- @param filetype string: optional filetype of the text content
--- @return ChartInfo|nil: chart info if found, nil otherwise
-function M.get_chart_at_position(text, position, filetype)
-  if not text or text == "" or not position then
-    return nil
-  end
-
-  local charts = M.get_mermaid_chart_info(text, filetype)
-
-  for _, chart in ipairs(charts) do
-    if position >= chart.start_line and position <= chart.end_line then
-      return chart
-    end
-  end
-
-  return nil
-end
-
--- Check if a position is inside a mermaid chart
--- @param text string: text content to search in
--- @param position number: line position in the text (0-indexed)
--- @param filetype string: optional filetype of the text content
--- @return boolean: true if position is in a mermaid chart
-function M.is_position_in_chart(text, position, filetype)
-  return M.get_chart_at_position(text, position, filetype) ~= nil
 end
 
 return M

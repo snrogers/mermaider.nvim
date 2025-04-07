@@ -60,32 +60,4 @@ describe("buffer", function()
       assert.equals("markdown", charts[2].ft)
     end)
   end)
-
-  -- Removed get_mermaid_charts_info tests as the function has been replaced
-
-  describe("get_chart_at_position", function()
-    it("finds chart at position", function()
-      -- Position in first mermaid block
-      local chart = buffer.get_chart_at_position(test_data.markdown_file, 6, "markdown")
-      assert.equals("graph TD;\n    A-->B;\n    A-->C;", chart.content)
-
-      -- Position in second mermaid block
-      chart = buffer.get_chart_at_position(test_data.markdown_file, 14, "markdown")
-      assert.equals("sequenceDiagram\n    Alice->>John: Hello John, how are you?\n    John-->>Alice: Great!", chart.content)
-
-      -- Position outside any mermaid block
-      chart = buffer.get_chart_at_position(test_data.markdown_file, 3, "markdown")
-      assert.is_nil(chart)
-    end)
-  end)
-
-  describe("is_position_in_chart", function()
-    it("returns true when position is in chart", function()
-      -- Position in first mermaid block
-      assert.is_true(buffer.is_position_in_chart(test_data.markdown_file, 6, "markdown"))
-
-      -- Position outside any mermaid block
-      assert.is_false(buffer.is_position_in_chart(test_data.markdown_file, 3, "markdown"))
-    end)
-  end)
 end)
