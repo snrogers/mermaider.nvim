@@ -3,7 +3,7 @@
 
 local M = {}
 local commands = require("mermaider.commands")
-local files = require("mermaider.files")
+local files    = require("mermaider.files")
 
 -- Track running jobs by buffer number
 local running_jobs = {}

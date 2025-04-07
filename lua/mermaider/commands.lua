@@ -53,8 +53,6 @@ function M.execute_async(cmd, on_success, on_error)
   local output = ""
   local error_output = ""
 
-  utils.safe_notify("Executing: " .. cmd, vim.log.levels.DEBUG)
-
   local handle
   handle = uv.spawn("sh", {
     args = { "-c", cmd },

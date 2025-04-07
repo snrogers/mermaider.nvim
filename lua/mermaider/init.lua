@@ -13,23 +13,14 @@ local mermaid           = require("mermaider.mermaid")
 local render            = require("mermaider.render")
 local utils             = require("mermaider.utils")
 
--- Configuration will be populated in setup()
 M.config = {}
-
--- Tracking variables
 M.tempfiles = {}
 
--- Setup function
--- @param opts table: user configuration options
 function M.setup(opts)
   M.config = config_module.setup(opts)
-
   M.check_dependencies()
-
-  -- Initialize image.nvim integration (now mandatory)
   image_integration.setup(M.config)
 
-  -- Create user commands
   api.nvim_create_user_command("MermaiderRender", function()
     M.render_current_buffer()
   end, { desc = "Render the current mermaid diagram" })
@@ -40,14 +31,20 @@ function M.setup(opts)
     mermaid.preview_diagram(bufnr, image_path, M.config)
   end, { desc = "Preview the current mermaid diagram" })
 
-  M.setup_autocmds()
+  api.nvim_create_user_command("MermaiderToggle", function()
+    local bufnr = api.nvim_get_current_buf()
+    image_integration.toggle_preview(bufnr)
+  end, { desc = "Toggle between mermaid code and preview" })
 
+  vim.keymap.set('n', '<leader>mt', function()
+    vim.cmd('MermaiderToggle')
+  end, { desc = "Toggle mermaid preview", silent = true })
+
+  M.setup_autocmds()
   utils.safe_notify("Mermaider plugin loaded with image.nvim", vim.log.levels.INFO)
 end
 
--- Check if required dependencies are available
 function M.check_dependencies()
-  -- Check if npx is available
   if not utils.is_program_installed("npx") then
     utils.safe_notify(
       "npx command not found. Please install Node.js and npm.",
@@ -55,7 +52,6 @@ function M.check_dependencies()
     )
   end
 
-  -- Check for image.nvim (now required)
   if not image_integration.is_available() then
     utils.safe_notify(
       "image.nvim not available. Please ensure it's installed and configured.",
@@ -64,11 +60,9 @@ function M.check_dependencies()
   end
 end
 
--- Set up autocommands
 function M.setup_autocmds()
   local augroup = api.nvim_create_augroup("Mermaider", { clear = true })
 
-  -- Auto render on save
   if M.config.auto_render then
     api.nvim_create_autocmd({ "BufWritePost" }, {
       group = augroup,
@@ -79,7 +73,6 @@ function M.setup_autocmds()
     })
   end
 
-  -- Auto render on open
   if M.config.auto_render_on_open then
     api.nvim_create_autocmd({ "BufEnter", "BufWinEnter" }, {
       group = augroup,
@@ -90,44 +83,38 @@ function M.setup_autocmds()
     })
   end
 
-  -- Clean up temp files and images on exit
   api.nvim_create_autocmd("VimLeavePre", {
     group = augroup,
     callback = function()
       render.cancel_all_jobs()
-      files.cleanup_temp_files(M.tempfiles)
       image_integration.clear_images()
+      files.cleanup_temp_files(M.tempfiles)
     end,
   })
 
-  -- Cancel render on buffer delete
   api.nvim_create_autocmd("BufDelete", {
     group = augroup,
     callback = function(ev)
       render.cancel_render(ev.buf)
+      image_integration.clear_image(ev.buf, vim.api.nvim_get_current_win())
+      M.tempfiles[ev.buf] = nil
     end,
   })
 
-  -- Re-render the image on window resize
   api.nvim_create_autocmd({ "WinResized" }, {
     group = augroup,
     callback = function()
-      -- Check if the resized window is the preview window
       for _, win in ipairs(vim.api.nvim_list_wins()) do
         local buf = vim.api.nvim_win_get_buf(win)
-        local success, is_preview = pcall(vim.api.nvim_buf_get_var, buf, "mermaider_preview")
-        if success and is_preview then
-          -- Re-render the image in the preview window
-          -- You might need to store the image_path and config somewhere
-          -- For simplicity, you can trigger a full re-render
-          M.render_current_buffer()
+        if M.config.inline_render and M.image_objects[buf] then
+          local image_path = files.get_temp_file_path(M.config, buf) .. ".png"
+          image_integration.render_inline(buf, image_path, M.config)
         end
       end
     end,
   })
 end
 
--- Render the current buffer
 function M.render_current_buffer()
   local bufnr = api.nvim_get_current_buf()
   local temp_path = files.get_temp_file_path(M.config, bufnr)

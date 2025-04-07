@@ -17,7 +17,10 @@ M.defaults = {
   max_width_window_percentage  = 80,
   max_height_window_percentage = 80,
 
-  -- Split window settings
+  -- Render settings
+  inline_render                = true,       -- Use inline rendering instead of split window
+  
+  -- Split window settings (used when inline_render is false)
   use_split                    = true,       -- Use a split window to show diagram
   split_direction              = "vertical", -- "vertical" or "horizontal"
   split_width                  = 50,         -- Width of the split (if vertical)
