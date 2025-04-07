@@ -1,11 +1,15 @@
 # Mermaider.nvim
 
+![Wow!](https://github.com/snrogers/mermaider.nvim/blob/main/examples/image.png?raw=true)
+
 A Neovim plugin for rendering [Mermaid.js](https://mermaid.js.org/) diagrams directly in your editor.
 
 ## Features
 
 - Auto-renders diagrams on save or when requested
 - Displays diagrams using [image.nvim](https://github.com/3rd/image.nvim) for in-editor visualization
+- Inline rendering mode lets you toggle between code and diagram view
+- Traditional split-window view option for side-by-side editing
 
 ## Requirements
 
@@ -64,7 +68,10 @@ require("mermaider").setup({
   max_width_window_percentage = 80,    -- Maximum width as percentage of window
   max_height_window_percentage = 80,   -- Maximum height as percentage of window
 
-  -- Split window settings
+  -- Render settings
+  inline_render = true,            -- Use inline rendering instead of split window
+
+  -- Split window settings (used when inline_render is false)
   use_split = true,                -- Use a split window to show diagram
   split_direction = "vertical",    -- "vertical" or "horizontal"
   split_width = 50,                -- Width of the split (if vertical)
@@ -80,7 +87,14 @@ The plugin automatically recognizes files with `.mmd` and `.mermaid` extensions.
 ### Commands
 
 - `:MermaiderRender` - Render the current mermaid diagram
-- `:MermaiderPreview` - Preview the rendered diagram in a split window
+- `:MermaiderPreview` - Preview the rendered diagram (inline or in split window based on configuration)
+- `:MermaiderToggle` - Toggle between code view and diagram view when using inline rendering
+
+### Keybindings
+
+The plugin provides one default keybinding:
+
+- `<leader>mt` - Toggle between code and diagram view (same as `:MermaiderToggle`)
 
 ## License
 
