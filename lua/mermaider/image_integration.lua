@@ -12,21 +12,7 @@ function M.is_available()
   return has_image_nvim
 end
 
-function M.setup(config)
-  if not M.is_available() then
-    utils.log_error("image.nvim not available during setup")
-    return false
-  end
-  utils.log_info("image.nvim integration enabled")
-  return true
-end
-
 function M.render_image(image_path, options)
-  if not M.is_available() then
-    utils.log_error("image.nvim not available for rendering")
-    return false
-  end
-
   local image = require("image")
   options = options or {}
 
@@ -94,10 +80,6 @@ function M.render_image(image_path, options)
 end
 
 function M.clear_images()
-  if not M.is_available() then
-    return false
-  end
-
   local image = require("image")
   local success, err = pcall(function()
     for buf, img in pairs(M.image_objects) do
@@ -117,10 +99,6 @@ function M.clear_images()
 end
 
 function M.clear_image(buffer, window)
-  if not M.is_available() then
-    return false
-  end
-
   local image = require("image")
   local success, err = pcall(function()
     image.clear({ buffer = buffer, window = window })
@@ -142,11 +120,6 @@ end
 -- @param config table: plugin configuration
 -- @return boolean: true if successful, false otherwise
 function M.render_inline(code_bufnr, image_path, config)
-  if not M.is_available() then
-    utils.log_error("image.nvim not available for inline rendering")
-    return false
-  end
-
   local api = vim.api
   local current_win = api.nvim_get_current_win()
   local code_bufnr = api.nvim_win_get_buf(current_win)
@@ -189,7 +162,6 @@ end
 -- Toggle between code and diagram view (optional, adjust if needed)
 function M.toggle_preview(bufnr)
   local api = vim.api
-  local current_win = api.nvim_get_current_win()
   local img = M.image_objects[bufnr]
 
   if img and img.is_rendered then

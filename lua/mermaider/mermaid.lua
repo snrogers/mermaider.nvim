@@ -2,14 +2,12 @@
 -- Core Mermaid diagram functionality with image.nvim
 
 local M = {}
+
 local api = vim.api
-local fn = vim.fn
-local commands = require("mermaider.commands")
 local files = require("mermaider.files")
-local status = require("mermaider.status")
-local utils = require("mermaider.utils")
 local image_integration = require("mermaider.image_integration")
 local ui = require("mermaider.ui")
+local utils = require("mermaider.utils")
 
 -- Preview a rendered mermaid diagram using image.nvim
 -- @param bufnr number: buffer id

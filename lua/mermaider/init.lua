@@ -19,7 +19,6 @@ M.tempfiles = {}
 function M.setup(opts)
   M.config = config_module.setup(opts)
   M.check_dependencies()
-  image_integration.setup(M.config)
 
   api.nvim_create_user_command("MermaiderRender", function()
     M.render_current_buffer()
