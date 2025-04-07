@@ -33,17 +33,17 @@ function M.init()
   end
 end
 
--- Get the current status for a buffer
--- @param bufnr number: buffer id
--- @return string: status string (one of M.STATUS values)
+--- Get the current status for a buffer
+--- @param bufnr number: buffer id
+--- @return string: status string (one of M.STATUS values)
 function M.get_status(bufnr)
   return render_status[bufnr] or M.STATUS.IDLE
 end
 
--- Set the status for a buffer
--- @param bufnr number: buffer id
--- @param status string: status to set (one of M.STATUS values)
--- @param message string|nil: optional status message
+--- Set the status for a buffer
+--- @param bufnr number: buffer id
+--- @param status string: status to set (one of M.STATUS values)
+--- @param message string|nil: optional status message
 function M.set_status(bufnr, status, message)
   -- Initialize if needed
   M.init()
@@ -94,8 +94,8 @@ function M.set_status(bufnr, status, message)
   end
 end
 
--- Clear status for a buffer
--- @param bufnr number: buffer id
+--- Clear status for a buffer
+--- @param bufnr number: buffer id
 function M.clear_status(bufnr)
   if status_ns then
     vim.schedule(function()

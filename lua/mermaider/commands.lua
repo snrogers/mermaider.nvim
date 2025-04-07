@@ -1,43 +1,65 @@
 -- lua/mermaider/commands.lua
 local M = {}
+
 local utils = require("mermaider.utils")
+local files = require("mermaider.files")
+local status = require("mermaider.status")
 
 
--- Build a mermaid render command with given options
-function M.build_render_command(config, output_file)
+--- Execute a command asynchronously
+--- @param config        table    Plugin configuration
+--- @param stdin_content string   Content to pipe to stdin
+--- @param callback      function Callback with (success, result) parameters
+--- @param bufnr         number   Buffer id
+--- @return vim.SystemObj
+function M.execute_render_job(config, stdin_content, callback, bufnr)
+  local output_file = files.get_temp_file_path(config, bufnr)
+
+  -- ----------------------------------------------------------------- --
+  -- Build Command
+  -- ----------------------------------------------------------------- --
   local cmd = config.mermaider_cmd:gsub("{{OUT_FILE}}", output_file)
   local options = {}
   if config.theme and config.theme ~= "" then
     table.insert(options, "--theme " .. config.theme)
   end
+
   if config.background_color and config.background_color ~= "" then
     table.insert(options, "--backgroundColor " .. config.background_color)
   end
-  if config.mmdc_options and config.mmdc_options ~= "" then
-    table.insert(options, config.mmdc_options)
-  end
+
   if #options > 0 then
     cmd = cmd .. " " .. table.concat(options, " ")
   end
-  return cmd
-end
 
-
--- Execute a command asynchronously with proper output handling
-function M.execute_async(cmd, stdin_content, on_success, on_error)
-  local opts = {
+  -- ----------------------------------------------------------------- --
+  -- Execute Command
+  -- ----------------------------------------------------------------- --
+  local job_opts = {
     text = true, -- Return stdout/stderr as strings, not bytes
     stdin = stdin_content,
   }
 
+  local on_success = function()
+    status.set_status(bufnr, status.STATUS.SUCCESS)
+    utils.safe_notify("Rendered diagram to " .. output_file .. ".png")
+    callback(true, output_file .. ".png")
+  end
+
+  local on_error = function(error_output)
+    status.set_status(bufnr, status.STATUS.ERROR, "Render failed")
+    utils.safe_notify("Render failed: " .. error_output, vim.log.levels.ERROR)
+    callback(false, error_output)
+  end
+
   local job = vim.system(
     {"sh", "-c", cmd},
-    opts,
+    job_opts,
     vim.schedule_wrap(function(result)
       if result.code == 0 then
-        on_success(result.stdout)
+        on_success()
       else
-        on_error(result.stderr, cmd)
+        on_error(result.stderr)
       end
     end)
   )

@@ -10,16 +10,19 @@ M.defaults = {
   mermaider_cmd                = 'bunx -y -p @mermaid-js/mermaid-cli mmdc -o {{OUT_FILE}}.png -s 3 -i -',
   temp_dir                     = fn.expand('$HOME/.cache/mermaider'),
   auto_render                  = true,
-  auto_preview                 = true,
   theme                        = "forest",
   background_color             = "#1e1e2e",
   max_width_window_percentage  = 80,
   max_height_window_percentage = 80,
 }
 
--- Validate configuration
+--- Validate configuration
+---@param config MermaiderConfig
+---@return MermaiderConfig
 function M.validate(config)
+  ---@class MermaiderConfig
   local result = vim.deepcopy(config)
+
   result.temp_dir = fn.expand(result.temp_dir)
   fn.mkdir(result.temp_dir, "p")
 

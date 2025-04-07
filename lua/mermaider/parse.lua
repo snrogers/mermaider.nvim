@@ -3,17 +3,19 @@
 
 local M = {}
 
--- Block info data structure
--- @class ChartInfo
--- @field content string: the mermaid chart content
--- @field start_line number: starting line in the text (0-indexed)
--- @field end_line number: ending line in the text (0-indexed)
--- @field ft string: detected filetype of the source
 
--- Extract mermaid code blocks using tree-sitter from markdown text
--- @param text string: text content to extract from
--- @param filetype string: filetype of the text content
--- @return table: list of ChartInfo objects
+--- Block info data structure
+--- @class ChartInfo
+--- @field content string: the mermaid chart content
+--- @field start_line number: starting line in the text (0-indexed)
+--- @field end_line number: ending line in the text (0-indexed)
+--- @field ft string: detected filetype of the source
+
+
+--- Extract mermaid code blocks using tree-sitter from markdown text
+--- @param text string: text content to extract from
+--- @param filetype string: filetype of the text content
+--- @return table: list of ChartInfo objects
 function M.get_mermaid_chart_info(text, filetype)
   if not text or text == "" then
     return {}

@@ -2,20 +2,20 @@ local ts = require('vim.treesitter')
 
 local M = {}
 
--- Extracts Mermaid code blocks from a Markdown string using Tree-sitter.
--- This function parses the input Markdown string and identifies fenced code blocks
--- (```) tagged with the 'mermaid' language identifier, returning their contents.
---
--- @param md_string string The Markdown string to parse. Must be non-empty.
--- @return table A table containing the contents of all Mermaid code blocks found.
---               Each entry is a string representing the code inside a ```mermaid block.
---               Returns an empty table if no Mermaid blocks are found or if parsing fails.
--- @usage
---   local md = [[```mermaid\ngraph TD\nA-->B\n```]]
---   local blocks = extract_mermaid_from_markdown(md)
---   for i, block in ipairs(blocks) do print(block) end
--- @requires Tree-sitter parser for 'markdown' installed (:TSInstall markdown)
--- @note Prints error messages to Neovim if input is invalid or parser is unavailable.
+--- Extracts Mermaid code blocks from a Markdown string using Tree-sitter.
+--- This function parses the input Markdown string and identifies fenced code blocks
+--- (```) tagged with the 'mermaid' language identifier, returning their contents.
+---
+--- @param md_string string The Markdown string to parse. Must be non-empty.
+--- @return table A table containing the contents of all Mermaid code blocks found.
+---               Each entry is a string representing the code inside a ```mermaid block.
+---               Returns an empty table if no Mermaid blocks are found or if parsing fails.
+--- @usage
+---   local md = [[```mermaid\ngraph TD\nA-->B\n```]]
+---   local blocks = extract_mermaid_from_markdown(md)
+---   for i, block in ipairs(blocks) do print(block) end
+--- @requires Tree-sitter parser for 'markdown' installed (:TSInstall markdown)
+--- @note Prints error messages to Neovim if input is invalid or parser is unavailable.
 function M.extract_mermaid_from_markdown(md_string)
   if type(md_string) ~= 'string' or md_string == '' then
     print('Error: Input must be a non-empty string')

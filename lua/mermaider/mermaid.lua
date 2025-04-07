@@ -8,10 +8,10 @@ local files = require("mermaider.files")
 local image_integration = require("mermaider.image_integration")
 local utils = require("mermaider.utils")
 
--- Preview a rendered mermaid diagram using image.nvim
--- @param bufnr number: buffer id
--- @param image_path string: path to the rendered image
--- @param config table: plugin configuration
+--- Preview a rendered mermaid diagram using image.nvim
+--- @param bufnr number: buffer id
+--- @param image_path string: path to the rendered image
+--- @param config table: plugin configuration
 function M.preview_diagram(bufnr, image_path, config)
   assert(
     files.file_exists(image_path),
