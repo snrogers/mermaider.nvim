@@ -31,7 +31,6 @@ function M.render_buffer(config, bufnr, callback)
   -- Build render command
   local cmd = commands.build_render_command(config, temp_path, temp_path)
 
-  -- Define callbacks for the async job
   local function on_success(output)
     -- Check if this is still the current job for this buffer
     if running_jobs[bufnr] and running_jobs[bufnr].is_current then

@@ -100,19 +100,6 @@ function M.setup_autocmds()
       M.tempfiles[ev.buf] = nil
     end,
   })
-
-  api.nvim_create_autocmd({ "WinResized" }, {
-    group = augroup,
-    callback = function()
-      for _, win in ipairs(vim.api.nvim_list_wins()) do
-        local buf = vim.api.nvim_win_get_buf(win)
-        if M.config.inline_render and M.image_objects[buf] then
-          local image_path = files.get_temp_file_path(M.config, buf) .. ".png"
-          image_integration.render_inline(buf, image_path, M.config)
-        end
-      end
-    end,
-  })
 end
 
 function M.render_current_buffer()
