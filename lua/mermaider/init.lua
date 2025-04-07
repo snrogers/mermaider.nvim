@@ -3,15 +3,15 @@
 
 local M = {}
 local api = vim.api
-local fn  = vim.fn
+local fn = vim.fn
 
 -- Import modules
-local config_module     = require("mermaider.config")
-local files             = require("mermaider.files")
+local config_module = require("mermaider.config")
+local files = require("mermaider.files")
 local image_integration = require("mermaider.image_integration")
-local mermaid           = require("mermaider.mermaid")
-local render            = require("mermaider.render")
-local utils             = require("mermaider.utils")
+local mermaid = require("mermaider.mermaid")
+local render = require("mermaider.render")
+local utils = require("mermaider.utils")
 
 M.config = {}
 M.tempfiles = {}
@@ -67,9 +67,9 @@ function M.setup_autocmds()
     api.nvim_create_autocmd({ "BufWritePost" }, {
       group = augroup,
       pattern = { "*.mmd", "*.mermaid" },
-      callback = function()
+      callback = utils.throttle(function()
         M.render_current_buffer()
-      end,
+      end, 500), -- Throttle to 500ms
     })
   end
 
@@ -104,12 +104,13 @@ end
 
 function M.render_current_buffer()
   local bufnr = api.nvim_get_current_buf()
-  local temp_path = files.get_temp_file_path(M.config, bufnr)
-  M.tempfiles[bufnr] = temp_path
 
   local on_complete = function(success, result)
-    if success and M.config.auto_preview then
-      mermaid.preview_diagram(bufnr, temp_path .. ".png", M.config)
+    if success then
+      M.tempfiles[bufnr] = result  -- Store the output file path (e.g., temp_path.png)
+      if M.config.auto_preview then
+        mermaid.preview_diagram(bufnr, result, M.config)
+      end
     end
   end
 

@@ -6,7 +6,7 @@ local fn = vim.fn
 
 -- Default configuration
 M.defaults = {
-  mermaider_cmd                = 'npx -y -p @mermaid-js/mermaid-cli mmdc -i {{IN_FILE}} -o {{OUT_FILE}}.png -s 3',
+  mermaider_cmd                = 'npx -y -p @mermaid-js/mermaid-cli mmdc -o {{OUT_FILE}} -s 3',
   temp_dir                     = fn.expand('$HOME/.cache/mermaider'),
   auto_render                  = true,
   auto_render_on_open          = true,
@@ -19,7 +19,7 @@ M.defaults = {
 
   -- Render settings
   inline_render                = true,       -- Use inline rendering instead of split window
-  
+
   -- Split window settings (used when inline_render is false)
   use_split                    = true,       -- Use a split window to show diagram
   split_direction              = "vertical", -- "vertical" or "horizontal"

@@ -1,86 +1,92 @@
 -- lua/mermaider/render.lua
--- Responsible for handling asynchronous rendering jobs for Mermaid diagrams
+-- Rendering logic for Mermaider
 
 local M = {}
+local uv = vim.uv or vim.loop
+local api = vim.api
+local files = require("mermaider.files")
 local commands = require("mermaider.commands")
-local files    = require("mermaider.files")
+local status = require("mermaider.status")
+local utils = require("mermaider.utils")
 
--- Track running jobs by buffer number
-local running_jobs = {}
+-- Table to keep track of active render jobs
+local active_jobs = {}
 
--- Render a buffer with Mermaid content asynchronously
+-- Render the buffer content as a Mermaid diagram
 -- @param config table: plugin configuration
--- @param bufnr number: buffer id to render
--- @param callback function: optional callback after rendering completes
+-- @param bufnr number: buffer id
+-- @param callback function: callback with (success, result) parameters
 function M.render_buffer(config, bufnr, callback)
-  -- Cancel any existing render job for this buffer
-  M.cancel_render(bufnr)
-
-  -- Get temporary file path
-  local temp_path = files.get_temp_file_path(config, bufnr)
-
-  -- Write buffer content to temp file
-  local write_ok, write_err = files.write_buffer_to_temp_file(bufnr, temp_path)
-  if not write_ok then
-    if callback then
-      callback(false, write_err)
-    end
+  if not api.nvim_buf_is_valid(bufnr) then
+    utils.safe_notify("Invalid buffer: " .. bufnr, vim.log.levels.ERROR)
     return
   end
 
-  -- Build render command
-  local cmd = commands.build_render_command(config, temp_path, temp_path)
+  -- Set status to rendering
+  status.set_status(bufnr, status.STATUS.RENDERING)
 
-  local function on_success(output)
-    -- Check if this is still the current job for this buffer
-    if running_jobs[bufnr] and running_jobs[bufnr].is_current then
-      running_jobs[bufnr] = nil
-      if callback then
-        callback(true, temp_path .. ".png")
-      end
+  -- Get temporary file paths
+  local temp_path = files.get_temp_file_path(config, bufnr)
+  local input_file = temp_path .. ".mmd"
+  local output_file = temp_path
+
+  -- Write buffer content to temp file
+  local write_ok, write_err = files.write_buffer_to_temp_file(bufnr, input_file)
+  if not write_ok then
+    status.set_status(bufnr, status.STATUS.ERROR, "Failed to write temp file")
+    utils.safe_notify("Failed to write temp file: " .. tostring(write_err), vim.log.levels.ERROR)
+    if callback then callback(false, write_err) end
+    return
+  end
+
+  -- Build the render command
+  local cmd = commands.build_render_command(config, output_file)
+  cmd = cmd:gsub("{{IN_FILE}}", input_file)
+
+  -- Execute the render command
+  local on_success = function()
+    if files.file_exists(output_file .. ".png") then
+      status.set_status(bufnr, status.STATUS.SUCCESS)
+      utils.log_info("Rendered diagram to " .. output_file .. ".png")
+      if callback then callback(true, output_file .. ".png") end
+    else
+      status.set_status(bufnr, status.STATUS.ERROR, "Output file not generated")
+      utils.safe_notify("Output file not generated after rendering", vim.log.levels.ERROR)
+      if callback then callback(false, "Output file not generated") end
     end
   end
 
-  local function on_error(error_output, failed_cmd)
-    -- Check if this is still the current job for this buffer
-    if running_jobs[bufnr] and running_jobs[bufnr].is_current then
-      running_jobs[bufnr] = nil
-      if callback then
-        callback(false, error_output)
-      end
-    end
+  local on_error = function(error_output)
+    status.set_status(bufnr, status.STATUS.ERROR, "Render failed")
+    utils.safe_notify("Render failed: " .. error_output, vim.log.levels.ERROR)
+    if callback then callback(false, error_output) end
   end
 
-  -- Start the async job
-  local handle = commands.execute_async(cmd, on_success, on_error)
-
-  -- Store job information
-  running_jobs[bufnr] = {
-    handle = handle,
-    is_current = true
-  }
+  -- Store the job handle
+  active_jobs[bufnr] = commands.execute_async(cmd, nil, on_success, on_error)
 end
 
--- Cancel an ongoing render job for a buffer
--- @param bufnr number: buffer id to cancel the render for
+-- Cancel a specific render job
+-- @param bufnr number: buffer id
 function M.cancel_render(bufnr)
-  if running_jobs[bufnr] and running_jobs[bufnr].handle then
-    -- Mark current job as no longer current
-    running_jobs[bufnr].is_current = false
-
-    -- Kill the job if possible
-    pcall(function() running_jobs[bufnr].handle:kill() end)
-
-    -- Remove from running jobs
-    running_jobs[bufnr] = nil
+  local job = active_jobs[bufnr]
+  if job and not job:is_closing() then
+    job:close()
+    active_jobs[bufnr] = nil
+    status.set_status(bufnr, status.STATUS.IDLE)
+    utils.log_info("Render cancelled for buffer " .. bufnr)
   end
 end
 
--- Cancel all running jobs
+-- Cancel all active render jobs
 function M.cancel_all_jobs()
-  for bufnr, _ in pairs(running_jobs) do
-    M.cancel_render(bufnr)
+  for bufnr, job in pairs(active_jobs) do
+    if job and not job:is_closing() then
+      job:close()
+      utils.log_info("Render job cancelled for buffer " .. bufnr)
+    end
   end
+  active_jobs = {}
 end
 
 return M
