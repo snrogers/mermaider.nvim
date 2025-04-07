@@ -22,13 +22,11 @@ function M.extract_mermaid_from_markdown(md_string)
     return {}
   end
 
-  local lang = 'markdown'
-  if not pcall(function() ts.language.require_language(lang) end) then
-    print('Error: Tree-sitter parser for "markdown" is not installed. Run :TSInstall markdown')
-    return {}
-  end
+  local MARKDOWN = 'markdown'
 
-  local parser = ts.get_parser(0, lang)
+  local parser, error = ts.get_parser(0, MARKDOWN)
+  assert(error == nil, error)
+
   local tree = parser:parse({
     source = function()
       return md_string
@@ -46,7 +44,7 @@ function M.extract_mermaid_from_markdown(md_string)
         (language) @lang (#eq? @lang "mermaid"))
       (code_fence_content) @content)
   ]]
-  local query = ts.query.parse(lang, query_str)
+  local query = ts.query.parse(MARKDOWN, query_str)
 
   local mermaid_blocks = {}
   for id, node, metadata in query:iter_captures(tree:root(), 0) do

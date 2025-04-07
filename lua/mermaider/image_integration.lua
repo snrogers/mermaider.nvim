@@ -2,16 +2,94 @@
 -- Image rendering with image.nvim
 
 local M = {}
+
+local api = vim.api
+
 local utils = require("mermaider.utils")
 
 M.image_objects = {} -- Buffer -> image object mapping
 M.buffer_pairs = {}  -- Code buffer -> Preview buffer mapping
 
-function M.is_available()
-  local has_image_nvim, _ = pcall(require, "image")
-  return has_image_nvim
+-- ----------------------------------------------------------------- --
+-- Public API
+-- ----------------------------------------------------------------- --
+function M.clear_images()
+  local image = require("image")
+  local success, err = pcall(function()
+    for buf, img in pairs(M.image_objects) do
+      img:clear()
+    end
+    M.image_objects = {}
+    image.clear()
+  end)
+
+  if not success then
+    utils.log_error("Failed to clear images: " .. tostring(err))
+    return false
+  end
+
+  utils.log_debug("All images cleared")
+  return true
 end
 
+function M.clear_image(buffer, window)
+  local image = require("image")
+  local success, err = pcall(function()
+    image.clear({ buffer = buffer, window = window })
+    if M.image_objects[buffer] then
+      M.image_objects[buffer] = nil
+    end
+  end)
+  if not success then
+    utils.log_error("Failed to clear image: " .. tostring(err))
+    return false
+  end
+  utils.log_debug("Image cleared for buffer " .. buffer .. " and window " .. window)
+  return true
+end
+
+--- Render an image inline in the current window
+--- @param code_bufnr number: buffer id of the code buffer
+--- @param image_path string: path to the rendered image
+--- @param config     table:  plugin configuration
+--- @return boolean: true if successful, false otherwise
+function M.render_inline(code_bufnr, image_path, config)
+  local current_win = api.nvim_get_current_win()
+
+  local line_count = api.nvim_buf_line_count(code_bufnr)
+
+  local row = line_count
+  local col = 0
+
+  local win_width  = api.nvim_win_get_width(current_win)
+  local win_height = api.nvim_win_get_height(current_win)
+  local max_width  = math.floor(win_width * (config.max_width_window_percentage / 100))
+  local max_height = math.floor(win_height * (config.max_height_window_percentage / 100))
+
+  local render_image_options = {
+    window = current_win,
+    buffer = code_bufnr,
+    x = col,
+    y = row,
+    max_width = max_width,
+    max_height = max_height,
+    inline = true,
+    with_virtual_padding = true,
+  }
+
+  local success = M.render_image(image_path, render_image_options)
+  if success then
+    utils.log_info("Mermaid diagram rendered inline with image.nvim")
+  else
+    utils.log_error("Failed to render inline Mermaid diagram")
+  end
+  return success
+end
+
+
+-- ----------------------------------------------------------------- --
+-- Private API
+-- ----------------------------------------------------------------- --
 function M.render_image(image_path, options)
   local image = require("image")
   options = options or {}
@@ -79,97 +157,6 @@ function M.render_image(image_path, options)
 
   utils.log_info("Image rendered successfully with image.nvim")
   return true
-end
-
-function M.clear_images()
-  local image = require("image")
-  local success, err = pcall(function()
-    for buf, img in pairs(M.image_objects) do
-      img:clear()
-    end
-    M.image_objects = {}
-    image.clear()
-  end)
-
-  if not success then
-    utils.log_error("Failed to clear images: " .. tostring(err))
-    return false
-  end
-
-  utils.log_debug("All images cleared")
-  return true
-end
-
-function M.clear_image(buffer, window)
-  local image = require("image")
-  local success, err = pcall(function()
-    image.clear({ buffer = buffer, window = window })
-    if M.image_objects[buffer] then
-      M.image_objects[buffer] = nil
-    end
-  end)
-  if not success then
-    utils.log_error("Failed to clear image: " .. tostring(err))
-    return false
-  end
-  utils.log_debug("Image cleared for buffer " .. buffer .. " and window " .. window)
-  return true
-end
-
--- Render an image inline in the current window
--- @param code_bufnr number: buffer id of the code buffer
--- @param image_path string: path to the rendered image
--- @param config table: plugin configuration
--- @return boolean: true if successful, false otherwise
-function M.render_inline(code_bufnr, image_path, config)
-  local api = vim.api
-  local current_win = api.nvim_get_current_win()
-  -- Removed: local code_bufnr = api.nvim_win_get_buf(current_win)
-  local line_count = api.nvim_buf_line_count(code_bufnr)
-  local row = line_count
-  local col = 0
-  local win_width = api.nvim_win_get_width(current_win)
-  local win_height = api.nvim_win_get_height(current_win)
-  local max_width = math.floor(win_width * (config.max_width_window_percentage / 100))
-  local max_height = math.floor(win_height * (config.max_height_window_percentage / 100))
-  local render_image_options = {
-    window = current_win,
-    buffer = code_bufnr,
-    x = col,
-    y = row,
-    max_width = max_width,
-    max_height = max_height,
-    inline = true,
-    with_virtual_padding = true,
-  }
-  utils.log_debug("Calling render_image with options: " .. vim.inspect(render_image_options))
-  local success = M.render_image(image_path, render_image_options)
-  if success then
-    utils.log_info("Mermaid diagram rendered inline with image.nvim")
-  else
-    utils.log_error("Failed to render inline Mermaid diagram")
-  end
-  return success
-end
-
--- Toggle between code and diagram view (optional, adjust if needed)
-function M.toggle_preview(bufnr)
-  local api = vim.api
-  local img = M.image_objects[bufnr]
-
-  if img and img.is_rendered then
-    img:clear()
-    utils.log_info("Diagram hidden")
-    return true
-  else
-    local image_path = require("mermaider.files").get_temp_file_path(M.config, bufnr) .. ".png"
-    if vim.fn.filereadable(image_path) == 1 then
-      return M.render_inline(bufnr, image_path, M.config)
-    else
-      utils.log_error("No rendered diagram available to toggle")
-      return false
-    end
-  end
 end
 
 return M

@@ -26,17 +26,8 @@ function M.setup(opts)
     M._render_current_buffer()
   end, { desc = "Render the current mermaid diagram" })
 
-  api.nvim_create_user_command("MermaiderToggle", function()
-    local bufnr = api.nvim_get_current_buf()
-    image_integration.toggle_preview(bufnr)
-  end, { desc = "Toggle between mermaid code and preview" })
-
-  vim.keymap.set('n', '<leader>mt', function()
-    vim.cmd('MermaiderToggle')
-  end, { desc = "Toggle mermaid preview", silent = true })
-
   M._setup_autocmds()
-  utils.safe_notify("Mermaider plugin loaded with image.nvim", vim.log.levels.INFO)
+  utils.safe_notify("Mermaider plugin loaded", vim.log.levels.DEBUG)
 end
 
 -- ----------------------------------------------------------------- --
@@ -50,7 +41,7 @@ function M._check_dependencies()
   local npx_found_ok = utils.is_program_installed("npx")
   assert(npx_found_ok, "npx not found")
 
-  local image_nvim_found_ok = image_integration.is_available()
+  local image_nvim_found_ok = pcall(require, "image")
   assert(image_nvim_found_ok, "image.nvim not found")
 end
 
@@ -100,19 +91,13 @@ end
 function M._render_current_buffer()
   local bufnr = api.nvim_get_current_buf()
 
-  local on_complete = function(success, result)
+  local on_complete = function(success, image_path)
     assert(success, "Failed to render diagram")
 
-    utils.log_debug("Render callback: success=" .. tostring(success) .. ", result=" .. tostring(result))
-
-    if not success then
-      utils.log_error("Render failed with: " .. result)
-    else
-      M._tempfiles[bufnr] = result
-      if M._config.auto_preview then
-        mermaid.preview_diagram(bufnr, result, M._config)
-      end
-    end
+    M._tempfiles[bufnr] = image_path
+    vim.schedule(function()
+      image_integration.render_inline(bufnr, image_path, M._config)
+    end)
   end
 
   render.render_charts_in_buffer(M._config, bufnr, on_complete)

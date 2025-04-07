@@ -13,17 +13,10 @@ local utils = require("mermaider.utils")
 --- @param image_path string: path to the rendered image
 --- @param config table: plugin configuration
 function M.preview_diagram(bufnr, image_path, config)
-  if not files.file_exists(image_path) then
-    utils.log_error("No rendered diagram found at: " .. image_path)
-    return
-  end
-  utils.log_debug("Scheduling preview for buffer " .. bufnr .. " with image " .. image_path)
+  assert(files.file_exists(image_path), "No rendered diagram found at: " .. image_path)
+
   vim.schedule(function()
-    utils.log_debug("Inside vim.schedule for preview")
-    local success = image_integration.render_inline(bufnr, image_path, config)
-    if not success then
-      utils.log_error("Failed to render diagram inline")
-    end
+    image_integration.render_inline(bufnr, image_path, config)
   end)
 end
 

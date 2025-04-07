@@ -16,7 +16,7 @@ function M.execute_render_job(config, stdin_content, callback, bufnr)
   local output_file = files.get_temp_file_path(config, bufnr)
 
   -- ----------------------------------------------------------------- --
-  -- Build Command
+  -- Build Command String
   -- ----------------------------------------------------------------- --
   local cmd = config.mermaider_cmd:gsub("{{OUT_FILE}}", output_file)
   if config.theme and config.theme ~= "" then

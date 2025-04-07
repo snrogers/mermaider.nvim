@@ -7,10 +7,9 @@ local fn = vim.fn
 --- Default configuration
 --- @class MermaiderConfig
 M.defaults = {
-  mermaider_cmd                = 'bunx -y -p @mermaid-js/mermaid-cli mmdc -o {{OUT_FILE}}.png -s 3 -i -',
+  mermaider_cmd                = 'bunx -y -p @mermaid-js/mermaid-cli mmdc -o {{OUT_FILE}}.png -s 5 -i -',
   temp_dir                     = fn.expand('$HOME/.cache/mermaider'),
   auto_render                  = true,
-  auto_preview                 = true,
   theme                        = "forest",
   background_color             = "#1e1e2e",
   max_width_window_percentage  = 80,

@@ -6,12 +6,13 @@ local M = {}
 local uv  = vim.uv
 local api = vim.api
 
-local files    = require("mermaider.files")
-local commands = require("mermaider.commands")
+local commands = require("mermaider.command")
 local status   = require("mermaider.status")
 local utils    = require("mermaider.utils")
 
--- Table to keep track of active render jobs
+
+--- Table to keep track of active render jobs
+--- @type table<number, vim.SystemObj>
 local active_jobs = {}
 
 --- Render the buffer content as a Mermaid diagram
@@ -24,7 +25,7 @@ function M.render_charts_in_buffer(config, bufnr, callback)
   status.set_status(bufnr, status.STATUS.RENDERING)
 
   local buffer_content = table.concat(api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
-  active_jobs[bufnr]   = commands.execute_render_job(config, buffer_content, callback, bufnr, output_file)
+  active_jobs[bufnr]   = commands.execute_render_job(config, buffer_content, callback, bufnr)
 end
 
 --- Cancel a specific render job
@@ -32,18 +33,18 @@ end
 function M.cancel_render(bufnr)
   local job = active_jobs[bufnr]
   if job and not job:is_closing() then
-    job:close()
+    job:kill(9)
     active_jobs[bufnr] = nil
     status.set_status(bufnr, status.STATUS.IDLE)
     utils.log_info("Render cancelled for buffer " .. bufnr)
   end
 end
 
--- Cancel all active render jobs
+--- Cancel all active render jobs
 function M.cancel_all_jobs()
   for bufnr, job in pairs(active_jobs) do
     if job and not job:is_closing() then
-      job:close()
+      job:kill(9)
       utils.log_info("Render job cancelled for buffer " .. bufnr)
     end
   end

@@ -51,29 +51,15 @@ require("mermaider").setup({
   -- Directory for temporary files
   temp_dir = vim.fn.expand('$HOME/.cache/mermaider'),
 
-  -- Auto render settings
-  auto_render = true,          -- Auto render on save
-  auto_render_on_open = true,  -- Auto render when opening a file
-  auto_preview = true,         -- Automatically preview after rendering
+  auto_render = true,          -- Auto render on save, BufEnter, BufWinEnter
 
   -- Mermaid diagram styling
   theme            = "forest",    -- "dark", "light", "forest", "neutral"
   background_color = "#1e1e2e", -- Background color for diagrams
 
-  -- Additional mmdc options
-  mmdc_options = "",
-
   -- Window size settings
   max_width_window_percentage = 80,    -- Maximum width as percentage of window
   max_height_window_percentage = 80,   -- Maximum height as percentage of window
-
-  -- Render settings
-  inline_render = true,            -- Use inline rendering instead of split window
-
-  -- Split window settings (used when inline_render is false)
-  use_split = true,                -- Use a split window to show diagram
-  split_direction = "vertical",    -- "vertical" or "horizontal"
-  split_width = 50,                -- Width of the split (if vertical)
 })
 ```
 
