@@ -5,25 +5,16 @@ local M = {}
 local fn = vim.fn
 
 -- Default configuration
+-- @class MermaiderConfig
 M.defaults = {
-  mermaider_cmd                = 'npx -y -p @mermaid-js/mermaid-cli mmdc -o {{OUT_FILE}}.png -s 3 -i -',
+  mermaider_cmd                = 'bunx -y -p @mermaid-js/mermaid-cli mmdc -o {{OUT_FILE}}.png -s 3 -i -',
   temp_dir                     = fn.expand('$HOME/.cache/mermaider'),
   auto_render                  = true,
-  auto_render_on_open          = true,
   auto_preview                 = true,
   theme                        = "forest",
   background_color             = "#1e1e2e",
-  mmdc_options                 = "",
   max_width_window_percentage  = 80,
   max_height_window_percentage = 80,
-
-  -- Render settings
-  inline_render                = true,       -- Use inline rendering instead of split window
-
-  -- Split window settings (used when inline_render is false)
-  use_split                    = true,       -- Use a split window to show diagram
-  split_direction              = "vertical", -- "vertical" or "horizontal"
-  split_width                  = 50,         -- Width of the split (if vertical)
 }
 
 -- Validate configuration
@@ -50,7 +41,8 @@ end
 -- Process user configuration
 function M.setup(user_config)
   local config = vim.tbl_deep_extend("force", M.defaults, user_config or {})
-  return M.validate(config)
+  M.validate(config)
+  return config
 end
 
 return M

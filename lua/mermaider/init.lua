@@ -14,15 +14,16 @@ local render            = require("mermaider.render")
 local utils             = require("mermaider.utils")
 
 
-M.config    = {}
-M.tempfiles = {}
 
+-- ----------------------------------------------------------------- --
+-- Public API
+-- ----------------------------------------------------------------- --
 function M.setup(opts)
-  M.config = config_module.setup(opts)
-  M.check_dependencies()
+  M._config = config_module.setup(opts)
+  M._check_dependencies()
 
   api.nvim_create_user_command("MermaiderRender", function()
-    M.render_current_buffer()
+    M._render_current_buffer()
   end, { desc = "Render the current mermaid diagram" })
 
   api.nvim_create_user_command("MermaiderToggle", function()
@@ -34,11 +35,18 @@ function M.setup(opts)
     vim.cmd('MermaiderToggle')
   end, { desc = "Toggle mermaid preview", silent = true })
 
-  M.setup_autocmds()
+  M._setup_autocmds()
   utils.safe_notify("Mermaider plugin loaded with image.nvim", vim.log.levels.INFO)
 end
 
-function M.check_dependencies()
+-- ----------------------------------------------------------------- --
+-- Private API
+-- ----------------------------------------------------------------- --
+M._config    = {}
+M._tempfiles = {}
+
+
+function M._check_dependencies()
   local npx_found_ok = utils.is_program_installed("npx")
   assert(npx_found_ok, "npx not found")
 
@@ -46,61 +54,63 @@ function M.check_dependencies()
   assert(image_nvim_found_ok, "image.nvim not found")
 end
 
-function M.setup_autocmds()
+function M._setup_autocmds()
   local augroup = api.nvim_create_augroup("Mermaider", { clear = true })
 
-  if M.config.auto_render then
+  -- Redraw on Save/Focus/Open?
+  if M._config.auto_render then
     api.nvim_create_autocmd({ "BufWritePost" }, {
       group = augroup,
       pattern = { "*.mmd", "*.mermaid" },
       callback = utils.throttle(function()
-        M.render_current_buffer()
+        M._render_current_buffer()
       end, 500), -- Throttle to 500ms
     })
-  end
 
-  if M.config.auto_render_on_open then
     api.nvim_create_autocmd({ "BufEnter", "BufWinEnter" }, {
       group = augroup,
       pattern = { "*.mmd", "*.mermaid" },
       callback = function()
-        M.render_current_buffer()
+        M._render_current_buffer()
       end,
     })
   end
 
-  api.nvim_create_autocmd("VimLeavePre", {
-    group = augroup,
-    callback = function()
-      render.cancel_all_jobs()
-      image_integration.clear_images()
-      files.cleanup_temp_files(M.tempfiles)
-    end,
-  })
-
+  -- On Buffer Delete
   api.nvim_create_autocmd("BufDelete", {
     group = augroup,
     callback = function(ev)
       render.cancel_render(ev.buf)
       image_integration.clear_image(ev.buf, vim.api.nvim_get_current_win())
-      M.tempfiles[ev.buf] = nil
+      M._tempfiles[ev.buf] = nil
+    end,
+  })
+
+  -- On Program Exit
+  api.nvim_create_autocmd("VimLeavePre", {
+    group = augroup,
+    callback = function()
+      render.cancel_all_jobs()
+      image_integration.clear_images()
+      files.cleanup_temp_files(M._tempfiles)
     end,
   })
 end
 
-function M.render_current_buffer()
+function M._render_current_buffer()
   local bufnr = api.nvim_get_current_buf()
 
   local on_complete = function(success, result)
     assert(success, "Failed to render diagram")
 
-    M.tempfiles[bufnr] = result  -- Store the output file path (e.g., temp_path.png)
-    if M.config.auto_preview then
-      mermaid.preview_diagram(bufnr, result, M.config)
+    M._tempfiles[bufnr] = result  -- Store the output file path (e.g., temp_path.png)
+
+    if M._config.auto_preview then
+      mermaid.preview_diagram(bufnr, result, M._config)
     end
   end
 
-  render.render_charts_in_buffer(M.config, bufnr, on_complete)
+  render.render_charts_in_buffer(M._config, bufnr, on_complete)
 end
 
 return M

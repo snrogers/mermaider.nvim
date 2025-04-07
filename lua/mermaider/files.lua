@@ -2,9 +2,8 @@
 -- File operation utilities for Mermaider
 
 local M = {}
-local fn = vim.fn
+local fn  = vim.fn
 local api = vim.api
-local utils = require("mermaider.utils")
 
 -- Path separator for current OS
 local path_sep = package.config:sub(1, 1)
@@ -15,7 +14,7 @@ local path_sep = package.config:sub(1, 1)
 -- @return string: path for temporary file (without extension)
 function M.get_temp_file_path(config, bufnr)
   bufnr = bufnr or api.nvim_get_current_buf()
-  local buf_name = api.nvim_buf_get_name(bufnr)
+  local buf_name  = api.nvim_buf_get_name(bufnr)
   local file_name = fn.fnamemodify(buf_name, ":t:r")
 
   -- Generate a hash based on the absolute path
@@ -48,13 +47,7 @@ end
 -- @param temp_files table: table of temp file paths to clean
 function M.cleanup_temp_files(temp_files)
   for bufnr, temp_path in pairs(temp_files) do
-    -- Try to remove the base file
-    pcall(os.remove, temp_path)
-
-    -- Try to remove common extensions
     pcall(os.remove, temp_path .. ".png")
-    pcall(os.remove, temp_path .. ".svg")
-    pcall(os.remove, temp_path .. ".pdf")
   end
 end
 

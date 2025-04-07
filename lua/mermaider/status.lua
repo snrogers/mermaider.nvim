@@ -90,7 +90,7 @@ function M.set_status(bufnr, status, message)
           render_status[bufnr] = M.STATUS.IDLE
         end)
       end
-    end, 5000)  -- Clear after 5 seconds
+    end, 1000)  -- Clear after 1 second
   end
 end
 
