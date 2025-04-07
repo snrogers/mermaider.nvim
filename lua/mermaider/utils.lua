@@ -7,8 +7,8 @@ local api = vim.api
 -- Log levels
 M.LOG_LEVELS = {
   DEBUG = 0,
-  INFO = 1,
-  WARN = 2,
+  INFO  = 1,
+  WARN  = 2,
   ERROR = 3
 }
 
@@ -18,9 +18,9 @@ local PLUGIN_NAME = "Mermaider"
 -- Global debug mode flag (set to true to enable verbose debugging)
 M.debug_mode = true
 
--- Safe notification function that uses vim.schedule to avoid fast event context errors
--- @param msg string: the message to display
--- @param level number|nil: the message level (default: INFO)
+--- Safe notification function that uses vim.schedule to avoid fast event context errors
+--- @param msg string: the message to display
+--- @param level number|nil: the message level (default: INFO)
 function M.safe_notify(msg, level)
   level = level or vim.log.levels.INFO
 
@@ -29,21 +29,28 @@ function M.safe_notify(msg, level)
   end)
 end
 
--- Debug log function
--- @param msg string: debug message
+--- Debug log function
+--- @param msg string: debug message
 function M.log_debug(msg)
-    M.safe_notify("[DEBUG] " .. msg, vim.log.levels.DEBUG)
+  M.safe_notify("[DEBUG] " .. msg, vim.log.levels.DEBUG)
 end
 
--- Info log function
--- @param msg string: info message
+--- Error log function
+--- @param msg string: error message
+function M.log_error(msg)
+  M.safe_notify("[ERROR] " .. msg, vim.log.levels.DEBUG)
+end
+
+
+--- Info log function
+--- @param msg string: info message
 function M.log_info(msg)
     M.safe_notify("[INFO] " .. msg, vim.log.levels.INFO)
 end
 
--- Check if a command is available in the system
--- @param cmd string: command to check
--- @return boolean: true if command exists
+--- Check if a command is available in the system
+--- @param cmd string: command to check
+--- @return boolean: true if command exists
 function M.command_exists(cmd)
   local handle = io.popen("command -v " .. cmd .. " 2>/dev/null")
   if not handle then
@@ -56,9 +63,9 @@ function M.command_exists(cmd)
   return result and result:len() > 0
 end
 
--- Check if a program is installed
--- @param program string: program name
--- @return boolean: true if installed
+--- Check if a program is installed
+--- @param program string: program name
+--- @return boolean: true if installed
 function M.is_program_installed(program)
   -- First try command -v (POSIX)
   if M.command_exists(program) then
@@ -80,10 +87,10 @@ function M.is_program_installed(program)
   return false
 end
 
--- Create a throttled function that only executes after a delay
--- @param func function: the function to throttle
--- @param delay number: delay in milliseconds
--- @return function: throttled function
+--- Create a throttled function that only executes after a delay
+--- @param func function: the function to throttle
+--- @param delay number: delay in milliseconds
+--- @return function: throttled function
 function M.throttle(func, delay)
   local timer = nil
   local last_exec = 0

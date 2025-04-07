@@ -103,10 +103,15 @@ function M._render_current_buffer()
   local on_complete = function(success, result)
     assert(success, "Failed to render diagram")
 
-    M._tempfiles[bufnr] = result  -- Store the output file path (e.g., temp_path.png)
+    utils.log_debug("Render callback: success=" .. tostring(success) .. ", result=" .. tostring(result))
 
-    if M._config.auto_preview then
-      mermaid.preview_diagram(bufnr, result, M._config)
+    if not success then
+      utils.log_error("Render failed with: " .. result)
+    else
+      M._tempfiles[bufnr] = result
+      if M._config.auto_preview then
+        mermaid.preview_diagram(bufnr, result, M._config)
+      end
     end
   end
 

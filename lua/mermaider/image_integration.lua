@@ -73,6 +73,8 @@ function M.render_image(image_path, options)
   if not success then
     utils.log_error("Failed to render image: " .. tostring(err))
     return false
+  else
+    utils.log_info("Image rendered successfully with image.nvim")
   end
 
   utils.log_info("Image rendered successfully with image.nvim")
@@ -122,40 +124,31 @@ end
 function M.render_inline(code_bufnr, image_path, config)
   local api = vim.api
   local current_win = api.nvim_get_current_win()
-  local code_bufnr = api.nvim_win_get_buf(current_win)
-
-  -- Calculate the position (after the last line)
+  -- Removed: local code_bufnr = api.nvim_win_get_buf(current_win)
   local line_count = api.nvim_buf_line_count(code_bufnr)
-  local row = line_count  -- 0-based, places it after the last line
-  local col = 0           -- Start at the beginning of the line
-
-  -- Calculate image dimensions based on window size
-  local win_width  = api.nvim_win_get_width(current_win)
+  local row = line_count
+  local col = 0
+  local win_width = api.nvim_win_get_width(current_win)
   local win_height = api.nvim_win_get_height(current_win)
-  local max_width  = math.floor(win_width * (config.max_width_window_percentage / 100))
+  local max_width = math.floor(win_width * (config.max_width_window_percentage / 100))
   local max_height = math.floor(win_height * (config.max_height_window_percentage / 100))
-
-  -- Set up display options
   local render_image_options = {
     window = current_win,
     buffer = code_bufnr,
     x = col,
     y = row,
-    max_width  = max_width,
+    max_width = max_width,
     max_height = max_height,
     inline = true,
     with_virtual_padding = true,
   }
-
-  -- Render the image in the code buffer
+  utils.log_debug("Calling render_image with options: " .. vim.inspect(render_image_options))
   local success = M.render_image(image_path, render_image_options)
-
   if success then
     utils.log_info("Mermaid diagram rendered inline with image.nvim")
   else
     utils.log_error("Failed to render inline Mermaid diagram")
   end
-
   return success
 end
 

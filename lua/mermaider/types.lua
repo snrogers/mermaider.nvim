@@ -6,19 +6,19 @@
 --[[
 -- Configuration type
 ---@class MermaiderConfig
----@field mermaider_cmd string Command to render mermaid diagrams
----@field temp_dir string Directory for temporary files
----@field auto_render boolean Whether to auto-render on save
----@field theme string Mermaid theme ("dark", "light", etc.)
----@field background_color string Background color in hex format
+---@field auto_render      boolean Whether to auto-render on save
+---@field background_color string  Background color in hex format
+---@field mermaider_cmd    string  Command to render mermaid diagrams
+---@field temp_dir         string  Directory for temporary files
+---@field theme            string  Mermaid theme ("dark", "light", etc.)
 
 
 -- Render status type
 ---@alias RenderStatus
----| "idle" # No rendering in progress
+---| "idle"      # No rendering in progress
 ---| "rendering" # Rendering in progress
----| "success" # Rendering completed successfully
----| "error" # Rendering failed
+---| "success"   # Rendering completed successfully
+---| "error"     # Rendering failed
 
 -- File path type
 ---@alias FilePath string Path to a file
