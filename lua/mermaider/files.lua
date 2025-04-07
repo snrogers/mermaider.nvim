@@ -2,6 +2,8 @@
 -- File operation utilities for Mermaider
 
 local M = {}
+M.tempfiles = {}
+
 local fn  = vim.fn
 local api = vim.api
 

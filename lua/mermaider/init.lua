@@ -9,7 +9,6 @@ local fn  = vim.fn
 local config_module     = require("mermaider.config")
 local files             = require("mermaider.files")
 local image_integration = require("mermaider.image_integration")
-local mermaid           = require("mermaider.mermaid")
 local render            = require("mermaider.render")
 local utils             = require("mermaider.utils")
 
@@ -33,9 +32,7 @@ end
 -- ----------------------------------------------------------------- --
 -- Private API
 -- ----------------------------------------------------------------- --
-M._config    = {}
-M._tempfiles = {}
-
+M._config = config_module.defaults -- Pre-init the config
 
 function M._check_dependencies()
   local npx_found_ok = utils.is_program_installed("npx")
@@ -73,7 +70,7 @@ function M._setup_autocmds()
     callback = function(ev)
       render.cancel_render(ev.buf)
       image_integration.clear_image(ev.buf, vim.api.nvim_get_current_win())
-      M._tempfiles[ev.buf] = nil
+      files.tempfiles[ev.buf] = nil
     end,
   })
 
@@ -83,24 +80,14 @@ function M._setup_autocmds()
     callback = function()
       render.cancel_all_jobs()
       image_integration.clear_images()
-      files.cleanup_temp_files(M._tempfiles)
+      files.cleanup_temp_files(files._tempfiles)
     end,
   })
 end
 
 function M._render_current_buffer()
   local bufnr = api.nvim_get_current_buf()
-
-  local on_complete = function(success, image_path)
-    assert(success, "Failed to render diagram")
-
-    M._tempfiles[bufnr] = image_path
-    vim.schedule(function()
-      image_integration.render_inline(bufnr, image_path, M._config)
-    end)
-  end
-
-  render.render_charts_in_buffer(M._config, bufnr, on_complete)
+  render.render_charts_in_buffer(M._config, bufnr)
 end
 
 return M

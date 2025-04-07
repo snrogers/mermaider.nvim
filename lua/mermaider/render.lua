@@ -18,14 +18,13 @@ local active_jobs = {}
 --- Render the buffer content as a Mermaid diagram
 --- @param config table: plugin configuration
 --- @param bufnr number: buffer id
---- @param callback function: callback with (success, result) parameters
-function M.render_charts_in_buffer(config, bufnr, callback)
+function M.render_charts_in_buffer(config, bufnr)
   assert(api.nvim_buf_is_valid(bufnr), "Invalid buffer: " .. bufnr)
 
   status.set_status(bufnr, status.STATUS.RENDERING)
 
   local buffer_content = table.concat(api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
-  active_jobs[bufnr]   = commands.execute_render_job(config, buffer_content, callback, bufnr)
+  active_jobs[bufnr]   = commands.execute_render_job(config, buffer_content, bufnr)
 end
 
 --- Cancel a specific render job

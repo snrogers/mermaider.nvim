@@ -4,16 +4,25 @@ local M = {}
 local utils = require("mermaider.utils")
 local files = require("mermaider.files")
 local status = require("mermaider.status")
+local image = require("mermaider.image_integration")
 
 
 --- Execute a command asynchronously
 --- @param config        table    Plugin configuration
 --- @param stdin_content string   Content to pipe to stdin
---- @param callback      function Callback with (success, result) parameters
 --- @param bufnr         number   Buffer id
 --- @return vim.SystemObj
-function M.execute_render_job(config, stdin_content, callback, bufnr)
+function M.execute_render_job(config, stdin_content, bufnr)
   local output_file = files.get_temp_file_path(config, bufnr)
+
+  local callback = function(success, image_path)
+    assert(success, "Failed to render diagram")
+
+    files.tempfiles[bufnr] = image_path
+    vim.schedule(function()
+      image.render_inline(bufnr, image_path, config)
+    end)
+  end
 
   -- ----------------------------------------------------------------- --
   -- Build Command String
@@ -54,6 +63,8 @@ function M.execute_render_job(config, stdin_content, callback, bufnr)
       if result.code == 0 then
         on_success()
       else
+        utils.safe_notify(result.stdout, vim.log.levels.ERROR)
+        utils.safe_notify(result.stderr, vim.log.levels.ERROR)
         on_error(result.stderr)
       end
     end)

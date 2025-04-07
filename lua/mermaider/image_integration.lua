@@ -63,15 +63,15 @@ function M.render_inline(code_bufnr, image_path, config)
 
   local win_width  = api.nvim_win_get_width(current_win)
   local win_height = api.nvim_win_get_height(current_win)
-  local max_width  = math.floor(win_width * (config.max_width_window_percentage / 100))
-  local max_height = math.floor(win_height * (config.max_height_window_percentage / 100))
+  local max_width  = win_width
+  local max_height = win_height
 
   local render_image_options = {
     window = current_win,
     buffer = code_bufnr,
     x = col,
     y = row,
-    max_width = max_width,
+    max_width  = max_width,
     max_height = max_height,
     inline = true,
     with_virtual_padding = true,
