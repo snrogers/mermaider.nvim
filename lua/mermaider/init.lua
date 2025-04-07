@@ -3,21 +3,21 @@
 
 local M = {}
 local api = vim.api
-local fn = vim.fn
+local fn  = vim.fn
 
 -- Import modules
-local utils = require("mermaider.utils")
-local mermaid = require("mermaider.mermaid")
-local files = require("mermaider.files")
-local config_module = require("mermaider.config")
+local config_module     = require("mermaider.config")
+local files             = require("mermaider.files")
 local image_integration = require("mermaider.image_integration")
+local mermaid           = require("mermaider.mermaid")
+local render            = require("mermaider.render")
+local utils             = require("mermaider.utils")
 
 -- Configuration will be populated in setup()
 M.config = {}
 
 -- Tracking variables
 M.tempfiles = {}
-M.render_jobs = {}
 
 -- Setup function
 -- @param opts table: user configuration options
@@ -94,8 +94,17 @@ function M.setup_autocmds()
   api.nvim_create_autocmd("VimLeavePre", {
     group = augroup,
     callback = function()
+      render.cancel_all_jobs()
       files.cleanup_temp_files(M.tempfiles)
       image_integration.clear_images()
+    end,
+  })
+
+  -- Cancel render on buffer delete
+  api.nvim_create_autocmd("BufDelete", {
+    group = augroup,
+    callback = function(ev)
+      render.cancel_render(ev.buf)
     end,
   })
 
@@ -124,19 +133,13 @@ function M.render_current_buffer()
   local temp_path = files.get_temp_file_path(M.config, bufnr)
   M.tempfiles[bufnr] = temp_path
 
-  if M.render_jobs[bufnr] and M.render_jobs[bufnr].kill then
-    pcall(function() M.render_jobs[bufnr]:kill() end)
-    M.render_jobs[bufnr] = nil
-  end
-
   local on_complete = function(success, result)
-    M.render_jobs[bufnr] = nil
     if success and M.config.auto_preview then
       mermaid.preview_diagram(bufnr, temp_path .. ".png", M.config)
     end
   end
 
-  mermaid.render_buffer(M.config, bufnr, on_complete)
+  render.render_buffer(M.config, bufnr, on_complete)
 end
 
 return M

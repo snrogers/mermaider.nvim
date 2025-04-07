@@ -1,0 +1,14 @@
+%% ----------------------------------------------------------------- %%
+%% Sample Mermaid Diagram for Testing
+%% ----------------------------------------------------------------- %%
+
+%%{init: {'theme': 'forest', 'themeVariables': { 'primaryColor': '#ff0000', 'primaryTextColor': '#fff', 'primaryBorderColor': '#ff0000', 'lineColor': '#f00', 'secondaryColor': '#006100', 'tertiaryColor': '#a3a3a3'}}}%%
+
+flowchart TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Great!]
+    B -->|No| D[Debug]
+    C --> E[Enjoy using Mermaider]
+    D --> F[Check the error messages]
+    F --> G[Fix the issue]
+    G --> B
