@@ -19,17 +19,12 @@ function M.execute_render_job(config, stdin_content, callback, bufnr)
   -- Build Command
   -- ----------------------------------------------------------------- --
   local cmd = config.mermaider_cmd:gsub("{{OUT_FILE}}", output_file)
-  local options = {}
   if config.theme and config.theme ~= "" then
-    table.insert(options, "--theme " .. config.theme)
+    cmd = cmd .. " --theme " .. config.theme
   end
 
   if config.background_color and config.background_color ~= "" then
-    table.insert(options, "--backgroundColor " .. config.background_color)
-  end
-
-  if #options > 0 then
-    cmd = cmd .. " " .. table.concat(options, " ")
+    cmd = cmd .. " --backgroundColor " .. config.background_color
   end
 
   -- ----------------------------------------------------------------- --
