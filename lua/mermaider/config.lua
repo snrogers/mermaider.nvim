@@ -6,7 +6,7 @@ local fn = vim.fn
 
 -- Default configuration
 M.defaults = {
-  mermaider_cmd                = 'npx -y -p @mermaid-js/mermaid-cli mmdc -o {{OUT_FILE}} -s 3',
+  mermaider_cmd                = 'npx -y -p @mermaid-js/mermaid-cli mmdc -o {{OUT_FILE}}.png -s 3 -i -',
   temp_dir                     = fn.expand('$HOME/.cache/mermaider'),
   auto_render                  = true,
   auto_render_on_open          = true,

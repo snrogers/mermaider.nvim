@@ -2,18 +2,19 @@
 -- Main entry point for Mermaider plugin, now focused on image.nvim
 
 local M = {}
+
 local api = vim.api
-local fn = vim.fn
+local fn  = vim.fn
 
--- Import modules
-local config_module = require("mermaider.config")
-local files = require("mermaider.files")
+local config_module     = require("mermaider.config")
+local files             = require("mermaider.files")
 local image_integration = require("mermaider.image_integration")
-local mermaid = require("mermaider.mermaid")
-local render = require("mermaider.render")
-local utils = require("mermaider.utils")
+local mermaid           = require("mermaider.mermaid")
+local render            = require("mermaider.render")
+local utils             = require("mermaider.utils")
 
-M.config = {}
+
+M.config    = {}
 M.tempfiles = {}
 
 function M.setup(opts)
@@ -23,12 +24,6 @@ function M.setup(opts)
   api.nvim_create_user_command("MermaiderRender", function()
     M.render_current_buffer()
   end, { desc = "Render the current mermaid diagram" })
-
-  api.nvim_create_user_command("MermaiderPreview", function()
-    local bufnr = api.nvim_get_current_buf()
-    local image_path = files.get_temp_file_path(M.config, bufnr) .. ".png"
-    mermaid.preview_diagram(bufnr, image_path, M.config)
-  end, { desc = "Preview the current mermaid diagram" })
 
   api.nvim_create_user_command("MermaiderToggle", function()
     local bufnr = api.nvim_get_current_buf()
@@ -44,19 +39,11 @@ function M.setup(opts)
 end
 
 function M.check_dependencies()
-  if not utils.is_program_installed("npx") then
-    utils.safe_notify(
-      "npx command not found. Please install Node.js and npm.",
-      vim.log.levels.WARN
-    )
-  end
+  local npx_found_ok = utils.is_program_installed("npx")
+  assert(npx_found_ok, "npx not found")
 
-  if not image_integration.is_available() then
-    utils.safe_notify(
-      "image.nvim not available. Please ensure it's installed and configured.",
-      vim.log.levels.ERROR
-    )
-  end
+  local image_nvim_found_ok = image_integration.is_available()
+  assert(image_nvim_found_ok, "image.nvim not found")
 end
 
 function M.setup_autocmds()
@@ -105,15 +92,15 @@ function M.render_current_buffer()
   local bufnr = api.nvim_get_current_buf()
 
   local on_complete = function(success, result)
-    if success then
-      M.tempfiles[bufnr] = result  -- Store the output file path (e.g., temp_path.png)
-      if M.config.auto_preview then
-        mermaid.preview_diagram(bufnr, result, M.config)
-      end
+    assert(success, "Failed to render diagram")
+
+    M.tempfiles[bufnr] = result  -- Store the output file path (e.g., temp_path.png)
+    if M.config.auto_preview then
+      mermaid.preview_diagram(bufnr, result, M.config)
     end
   end
 
-  render.render_buffer(M.config, bufnr, on_complete)
+  render.render_charts_in_buffer(M.config, bufnr, on_complete)
 end
 
 return M

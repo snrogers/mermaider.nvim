@@ -45,9 +45,8 @@ Here's a configuration with all available options and their default values:
 ```lua
 require("mermaider").setup({
   -- Command to run the mermaid-cli
-  -- {{IN_FILE}} will be replaced with the input file path
   -- {{OUT_FILE}} will be replaced with the output file path
-  mermaider_cmd = 'npx -y -p @mermaid-js/mermaid-cli mmdc -i {{IN_FILE}} -o {{OUT_FILE}}.png -s 3',
+  mermaider_cmd = 'npx -y -p @mermaid-js/mermaid-cli mmdc -o {{OUT_FILE}}.png -s 3',
 
   -- Directory for temporary files
   temp_dir = vim.fn.expand('$HOME/.cache/mermaider'),

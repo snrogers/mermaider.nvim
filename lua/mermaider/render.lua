@@ -18,34 +18,21 @@ local active_jobs = {}
 -- @param config table: plugin configuration
 -- @param bufnr number: buffer id
 -- @param callback function: callback with (success, result) parameters
-function M.render_buffer(config, bufnr, callback)
-  if not api.nvim_buf_is_valid(bufnr) then
-    utils.safe_notify("Invalid buffer: " .. bufnr, vim.log.levels.ERROR)
-    return
-  end
+function M.render_charts_in_buffer(config, bufnr, callback)
+  assert(api.nvim_buf_is_valid(bufnr), "Invalid buffer: " .. bufnr)
 
   -- Set status to rendering
   status.set_status(bufnr, status.STATUS.RENDERING)
 
-  -- Get temporary file paths
-  local temp_path = files.get_temp_file_path(config, bufnr)
-  local input_file = temp_path .. ".mmd"
-  local output_file = temp_path
-
-  -- Write buffer content to temp file
-  local write_ok, write_err = files.write_buffer_to_temp_file(bufnr, input_file)
-  if not write_ok then
-    status.set_status(bufnr, status.STATUS.ERROR, "Failed to write temp file")
-    utils.safe_notify("Failed to write temp file: " .. tostring(write_err), vim.log.levels.ERROR)
-    if callback then callback(false, write_err) end
-    return
-  end
+  -- Get temporary file path for output
+  local output_file   = files.get_temp_file_path(config, bufnr)
 
   -- Build the render command
   local cmd = commands.build_render_command(config, output_file)
-  cmd = cmd:gsub("{{IN_FILE}}", input_file)
 
-  -- Execute the render command
+  -- Stdin-based approach
+  local content = table.concat(api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
+
   local on_success = function()
     if files.file_exists(output_file .. ".png") then
       status.set_status(bufnr, status.STATUS.SUCCESS)
@@ -64,8 +51,7 @@ function M.render_buffer(config, bufnr, callback)
     if callback then callback(false, error_output) end
   end
 
-  -- Store the job handle
-  active_jobs[bufnr] = commands.execute_async(cmd, nil, on_success, on_error)
+  active_jobs[bufnr] = commands.execute_async(cmd, content, on_success, on_error)
 end
 
 -- Cancel a specific render job

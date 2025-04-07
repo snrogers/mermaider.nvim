@@ -1,8 +1,8 @@
--- spec/buffer_spec.lua
--- Tests for buffer.lua using busted
+-- spec/parse_spec.lua
+-- Tests for parse.lua using busted
 
 -- Load the module to test
-local buffer = require("mermaider.buffer")
+local parse = require("mermaider.parse")
 
 -- Test data
 local test_data = {
@@ -36,10 +36,10 @@ End of file]]
 }
 
 -- Tests
-describe("buffer", function()
+describe("parse", function()
   describe("get_mermaid_chart_info", function()
     it("extracts full content info from mermaid files", function()
-      local charts = buffer.get_mermaid_chart_info(test_data.mermaid_file, "mermaid")
+      local charts = parse.get_mermaid_chart_info(test_data.mermaid_file, "mermaid")
       assert.equals(1, #charts)
       assert.equals(test_data.mermaid_file, charts[1].content)
       assert.equals(0, charts[1].start_line)
@@ -48,7 +48,7 @@ describe("buffer", function()
     end)
 
     it("extracts mermaid blocks info from markdown", function()
-      local charts = buffer.get_mermaid_chart_info(test_data.markdown_file, "markdown")
+      local charts = parse.get_mermaid_chart_info(test_data.markdown_file, "markdown")
       assert.equals(2, #charts)
       assert.equals("graph TD;\n    A-->B;\n    A-->C;", charts[1].content)
       assert.equals("sequenceDiagram\n    Alice->>John: Hello John, how are you?\n    John-->>Alice: Great!", charts[2].content)

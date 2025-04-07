@@ -1,4 +1,4 @@
--- lua/mermaider/buffer.lua
+-- lua/mermaider/parse.lua
 -- Text analysis for extracting mermaid diagrams from text content
 
 local M = {}
