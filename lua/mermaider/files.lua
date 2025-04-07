@@ -37,26 +37,6 @@ function M.get_temp_file_path(config, bufnr)
   return temp_path
 end
 
--- Write buffer content to a temporary file
--- @param bufnr number: buffer id
--- @param temp_path string: path to write the file
--- @return boolean, string: success flag and error message if any
-function M.write_buffer_to_temp_file(bufnr, temp_path)
-  local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
-
-  local ok, err = pcall(function()
-    local file = io.open(temp_path, "w")
-    if not file then
-      error("Could not open file for writing: " .. temp_path)
-    end
-
-    file:write(table.concat(lines, "\n"))
-    file:close()
-  end)
-
-  return ok, err
-end
-
 -- Check if a file exists and is readable
 -- @param path string: file path to check
 -- @return boolean: true if file exists and is readable

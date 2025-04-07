@@ -37,7 +37,7 @@ function M.get_mermaid_chart_info(text, filetype)
     }
   end
 
-  -- For non-mermaid files, assuming tree-sitter is available
+  -- Else for non-mermaid files, assuming tree-sitter is available
   -- This is where you would integrate tree-sitter parsing
   -- For now, using the regex approach for backward compatibility
 
