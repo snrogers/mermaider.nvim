@@ -3,11 +3,13 @@
 
 local M = {}
 
-local api = vim.api
+local api   = vim.api
+local image = require("image")
 
 local config_module     = require("mermaider.config")
 local render            = require("mermaider.render")
 local utils             = require("mermaider.utils")
+local files             = require("mermaider.files")
 
 
 -- ----------------------------------------------------------------- --
@@ -59,6 +61,25 @@ function M._setup_autocmds()
       end,
     })
   end
+
+  -- On Buffer Delete
+  api.nvim_create_autocmd("BufDelete", {
+    group = augroup,
+    callback = function(ev)
+      render.cancel_render(ev.buf)
+      image_integration.clear_image(ev.buf, vim.api.nvim_get_current_win())
+      files.tempfiles[ev.buf] = nil
+    end,
+  })
+
+  -- Clear all images On Program Exit
+  api.nvim_create_autocmd("VimLeavePre", {
+    group = augroup,
+    callback = function()
+      image.clear()
+      files.cleanup_temp_files(files._tempfiles)
+    end,
+  })
 end
 
 function M._setup_cmds()
