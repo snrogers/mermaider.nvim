@@ -1,4 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
-  "fart": false
+  "runtime.version": "Lua 5.1",
+  "diagnostics.globals": ["vim"],
+  "workspace.library": [
+    "./lua",
+    "/USers/sebastian/.luarocks/share/lua/5.1"
+  ],
+  "workspace.checkThirdParty": false
 }

@@ -4,38 +4,34 @@
 local M = {}
 
 local api = vim.api
-local fn  = vim.fn
 
 local config_module     = require("mermaider.config")
-local files             = require("mermaider.files")
-local image_integration = require("mermaider.image_integration")
 local render            = require("mermaider.render")
 local utils             = require("mermaider.utils")
-
 
 
 -- ----------------------------------------------------------------- --
 -- Public API
 -- ----------------------------------------------------------------- --
+
 function M.setup(opts)
   M._config = config_module.setup(opts)
   M._check_dependencies()
 
-  api.nvim_create_user_command("MermaiderRender", function()
-    M._render_current_buffer()
-  end, { desc = "Render the current mermaid diagram" })
-
+  M._setup_cmds()
   M._setup_autocmds()
-  utils.safe_notify("Mermaider plugin loaded", vim.log.levels.DEBUG)
+
+  utils.log_debug("Mermaider plugin loaded")
 end
 
 -- ----------------------------------------------------------------- --
 -- Private API
 -- ----------------------------------------------------------------- --
+
 M._config = config_module.defaults -- Pre-init the config
 
 function M._check_dependencies()
-  local npx_found_ok = utils.is_program_installed("npx")
+  local npx_found_ok = utils._is_program_installed("npx")
   assert(npx_found_ok, "npx not found")
 
   local image_nvim_found_ok = pcall(require, "image")
@@ -63,26 +59,12 @@ function M._setup_autocmds()
       end,
     })
   end
+end
 
-  -- On Buffer Delete
-  api.nvim_create_autocmd("BufDelete", {
-    group = augroup,
-    callback = function(ev)
-      render.cancel_render(ev.buf)
-      image_integration.clear_image(ev.buf, vim.api.nvim_get_current_win())
-      files.tempfiles[ev.buf] = nil
-    end,
-  })
-
-  -- On Program Exit
-  api.nvim_create_autocmd("VimLeavePre", {
-    group = augroup,
-    callback = function()
-      render.cancel_all_jobs()
-      image_integration.clear_images()
-      files.cleanup_temp_files(files._tempfiles)
-    end,
-  })
+function M._setup_cmds()
+  api.nvim_create_user_command("MermaiderRender", function()
+    M._render_current_buffer()
+  end, { desc = "Render the current mermaid diagram" })
 end
 
 function M._render_current_buffer()

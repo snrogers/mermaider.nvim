@@ -4,17 +4,19 @@
 local M = {}
 
 local api = vim.api
+local image = require("image")
 
 local utils = require("mermaider.utils")
 
+--- @type table<number, image.Image>
 M.image_objects = {} -- Buffer -> image object mapping
+
 M.buffer_pairs = {}  -- Code buffer -> Preview buffer mapping
 
 -- ----------------------------------------------------------------- --
 -- Public API
 -- ----------------------------------------------------------------- --
 function M.clear_images()
-  local image = require("image")
   local success, err = pcall(function()
     for buf, img in pairs(M.image_objects) do
       img:clear()

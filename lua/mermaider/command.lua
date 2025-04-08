@@ -1,10 +1,10 @@
 -- lua/mermaider/commands.lua
 local M = {}
 
-local utils = require("mermaider.utils")
-local files = require("mermaider.files")
+local files  = require("mermaider.files")
+local image  = require("mermaider.image_integration")
 local status = require("mermaider.status")
-local image = require("mermaider.image_integration")
+local utils  = require("mermaider.utils")
 
 
 --- Execute a command asynchronously
@@ -45,15 +45,9 @@ function M.execute_render_job(config, stdin_content, bufnr)
   }
 
   local on_success = function()
-    status.set_status(bufnr, status.STATUS.SUCCESS)
-    utils.safe_notify("Rendered diagram to " .. output_file .. ".png")
-    callback(true, output_file .. ".png")
   end
 
   local on_error = function(error_output)
-    status.set_status(bufnr, status.STATUS.ERROR, "Render failed")
-    utils.safe_notify("Render failed: " .. error_output, vim.log.levels.ERROR)
-    callback(false, error_output)
   end
 
   local job = vim.system(
@@ -61,11 +55,14 @@ function M.execute_render_job(config, stdin_content, bufnr)
     job_opts,
     vim.schedule_wrap(function(result)
       if result.code == 0 then
-        on_success()
+        status.set_status(bufnr, status.STATUS.SUCCESS)
+        utils.log_debug("Rendered diagram to " .. output_file .. ".png")
+        callback(true, output_file .. ".png")
       else
-        utils.safe_notify(result.stdout, vim.log.levels.ERROR)
-        utils.safe_notify(result.stderr, vim.log.levels.ERROR)
-        on_error(result.stderr)
+        utils.log_error("Render failed: " ..result.stdout)
+        utils.log_error("Render failed: " ..result.stderr)
+        status.set_status(bufnr, status.STATUS.ERROR, "Render failed")
+        callback(false, result.stderr)
       end
     end)
   )

@@ -7,7 +7,7 @@ M.tempfiles = {}
 local fn  = vim.fn
 local api = vim.api
 
--- Path separator for current OS
+--- Path separator for current OS
 local path_sep = package.config:sub(1, 1)
 
 --- Generate a temporary file path for a buffer
@@ -36,13 +36,6 @@ function M.get_temp_file_path(config, bufnr)
   local temp_path = config.temp_dir .. path_sep .. file_name .. "_" .. hash_str
 
   return temp_path
-end
-
---- Check if a file exists and is readable
---- @param path string: file path to check
---- @return boolean: true if file exists and is readable
-function M.file_exists(path)
-  return fn.filereadable(path) == 1
 end
 
 --- Clean up temporary files for a buffer
