@@ -38,9 +38,8 @@ end
 --- Render an image inline in the current window
 --- @param code_bufnr number: buffer id of the code buffer
 --- @param image_path string: path to the rendered image
---- @param config     table:  plugin configuration
 --- @return boolean: true if successful, false otherwise
-function M.render_inline(code_bufnr, image_path, config)
+function M.render_inline(code_bufnr, image_path)
   local current_win = api.nvim_get_current_win()
 
   local line_count = api.nvim_buf_line_count(code_bufnr)

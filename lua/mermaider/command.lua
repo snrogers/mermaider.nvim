@@ -1,10 +1,10 @@
 -- lua/mermaider/commands.lua
 local M = {}
 
-local files              = require("mermaider.files")
-local image_integration  = require("mermaider.image_integration")
-local status             = require("mermaider.status")
-local utils              = require("mermaider.utils")
+local files             = require("mermaider.files")
+local image_integration = require("mermaider.image_integration")
+local status            = require("mermaider.status")
+local utils             = require("mermaider.utils")
 
 
 --- Execute a command asynchronously
@@ -20,7 +20,7 @@ function M.execute_render_job(config, stdin_content, bufnr)
 
     files.tempfiles[bufnr] = image_path
     vim.schedule(function()
-      image_integration.render_inline(bufnr, image_path, config)
+      image_integration.render_inline(bufnr, image_path)
     end)
   end
 
