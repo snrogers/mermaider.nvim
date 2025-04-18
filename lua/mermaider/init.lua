@@ -33,7 +33,7 @@ end
 M._config = config_module.defaults -- Pre-init the config
 
 function M._check_dependencies()
-  local npx_found_ok = utils._is_program_installed("npx")
+  local npx_found_ok = utils.is_program_installed("npx")
   assert(npx_found_ok, "npx not found")
 
   local image_nvim_found_ok = pcall(require, "image")
@@ -49,7 +49,8 @@ function M._setup_autocmds()
       group = augroup,
       pattern = { "*.mmd", "*.mermaid" },
       callback = utils.throttle(function()
-        M._render_current_buffer()
+        local bufnr = api.nvim_get_current_buf()
+        render.render_charts_in_buffer(M._config, bufnr)
       end, 500), -- Throttle to 500ms
     })
 
@@ -57,7 +58,8 @@ function M._setup_autocmds()
       group = augroup,
       pattern = { "*.mmd", "*.mermaid" },
       callback = function()
-        M._render_current_buffer()
+        local bufnr = api.nvim_get_current_buf()
+        render.render_charts_in_buffer(M._config, bufnr)
       end,
     })
   end
@@ -84,13 +86,9 @@ end
 
 function M._setup_cmds()
   api.nvim_create_user_command("MermaiderRender", function()
-    M._render_current_buffer()
+    local bufnr = api.nvim_get_current_buf()
+    render.render_charts_in_buffer(M._config, bufnr)
   end, { desc = "Render the current mermaid diagram" })
-end
-
-function M._render_current_buffer()
-  local bufnr = api.nvim_get_current_buf()
-  render.render_charts_in_buffer(M._config, bufnr)
 end
 
 return M

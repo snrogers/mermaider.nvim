@@ -82,30 +82,10 @@ function M.throttle(func, delay)
   end
 end
 
-
--- ----------------------------------------------------------------- --
--- Private API
--- ----------------------------------------------------------------- --
-
---- Check if a command is available in the system
---- @param cmd string: command to check
---- @return boolean: true if command exists
-function M._command_exists(cmd)
-  local handle = io.popen("command -v " .. cmd .. " 2>/dev/null")
-  if not handle then
-    return false
-  end
-
-  local result = handle:read("*a")
-  handle:close()
-
-  return result and result:len() > 0
-end
-
 --- Check if a program is installed
 --- @param program string: program name
 --- @return boolean: true if installed
-function M._is_program_installed(program)
+function M.is_program_installed(program)
   -- First try command -v (POSIX)
   if M._command_exists(program) then
     return true
@@ -126,5 +106,23 @@ function M._is_program_installed(program)
   return false
 end
 
+-- ----------------------------------------------------------------- --
+-- Private API
+-- ----------------------------------------------------------------- --
+
+--- Check if a command is available in the system
+--- @param cmd string: command to check
+--- @return boolean: true if command exists
+function M._command_exists(cmd)
+  local handle = io.popen("command -v " .. cmd .. " 2>/dev/null")
+  if not handle then
+    return false
+  end
+
+  local result = handle:read("*a")
+  handle:close()
+
+  return result and result:len() > 0
+end
 
 return M
