@@ -1,5 +1,9 @@
--- lua/mermaider/commands.lua
+-- lua/mermaider/render.lua
+-- Rendering logic for Mermaider
+
 local M = {}
+
+local api = vim.api
 
 local files             = require("mermaider.files")
 local image_integration = require("mermaider.image_integration")
@@ -7,12 +11,56 @@ local status            = require("mermaider.status")
 local utils             = require("mermaider.utils")
 
 
+--- Table to keep track of active render jobs
+--- @type table<number, vim.SystemObj>
+M._active_jobs = {}
+
+--- Render the buffer content as a Mermaid diagram
+--- @param config table: plugin configuration
+--- @param bufnr number: buffer id
+function M.render_mmd_buffer(config, bufnr)
+  assert(api.nvim_buf_is_valid(bufnr), "Invalid buffer: " .. bufnr)
+
+  status.set_status(bufnr, status.STATUS.RENDERING)
+
+  local buffer_content = table.concat(api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
+  M._active_jobs[bufnr]   = M._fork_render_job(config, buffer_content, bufnr)
+end
+
+--- Cancel a specific render job
+--- @param bufnr number: buffer id
+function M.cancel_render(bufnr)
+  local job = M._active_jobs[bufnr]
+  if job and not job:is_closing() then
+    job:kill(9)
+    M._active_jobs[bufnr] = nil
+    status.set_status(bufnr, status.STATUS.IDLE)
+    utils.log_info("Render cancelled for buffer " .. bufnr)
+  end
+end
+
+--- Cancel all active render jobs
+function M.cancel_all_jobs()
+  for bufnr, job in pairs(M._active_jobs) do
+    if job and not job:is_closing() then
+      job:kill(9)
+      utils.log_info("Render job cancelled for buffer " .. bufnr)
+    end
+  end
+  M._active_jobs = {}
+end
+
+
+-- ----------------------------------------------------------------- --
+-- Private API
+-- ----------------------------------------------------------------- --
+
 --- Execute a command asynchronously
 --- @param config        table    Plugin configuration
 --- @param stdin_content string   Content to pipe to stdin
 --- @param bufnr         number   Buffer id
 --- @return vim.SystemObj
-function M.execute_render_job(config, stdin_content, bufnr)
+function M._fork_render_job(config, stdin_content, bufnr)
   local output_file = files.get_temp_file_path(config, bufnr)
 
   local callback = function(success, image_path)
@@ -58,10 +106,19 @@ function M.execute_render_job(config, stdin_content, bufnr)
         status.set_status(bufnr, status.STATUS.ERROR, "Render failed")
         callback(false, result.stderr)
       end
+
+      -- Cleanup
+      files.tempfiles[bufnr] = nil
+      M._active_jobs[bufnr]  = nil
     end)
   )
 
   return job -- Can be used to kill the job with job:kill()
 end
+
+
+-- ----------------------------------------------------------------- --
+-- Module Export
+-- ----------------------------------------------------------------- --
 
 return M
