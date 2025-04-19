@@ -41,7 +41,7 @@ end
 --- Clean up temporary files for a buffer
 --- @param temp_files table: table of temp file paths to clean
 function M.cleanup_temp_files(temp_files)
-  for bufnr, temp_path in pairs(temp_files) do
+  for _bufnr, temp_path in pairs(temp_files) do
     pcall(os.remove, temp_path .. ".png")
   end
 end

@@ -16,6 +16,7 @@ local utils             = require("mermaider.utils")
 M._active_jobs = {}
 
 --- Render the buffer content as a Mermaid diagram
+--- TODO: Also handle split window rendering
 --- @param config table: plugin configuration
 --- @param bufnr number: buffer id
 function M.render_mmd_buffer(config, bufnr)
@@ -23,8 +24,28 @@ function M.render_mmd_buffer(config, bufnr)
 
   status.set_status(bufnr, status.STATUS.RENDERING)
 
-  local buffer_content = table.concat(api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
-  M._active_jobs[bufnr]   = M._fork_render_job(config, buffer_content, bufnr)
+  --- On success, render the image inline
+  local on_render_job_success = function(image_path)
+    status.set_status(bufnr, status.STATUS.SUCCESS)
+    utils.log_debug("Rendered diagram to " .. image_path)
+
+    files.tempfiles[bufnr] = image_path
+    vim.schedule(function()
+      image_integration.render_inline(bufnr, image_path)
+    end)
+  end
+
+  --- On error, set the status to error
+  local on_render_job_error = function(err)
+    status.set_status(bufnr, status.STATUS.ERROR, err)
+  end
+
+  M._active_jobs[bufnr]   = M._fork_render_job(
+    config,
+    bufnr,
+    on_render_job_success,
+    on_render_job_error
+  )
 end
 
 --- Cancel a specific render job
@@ -50,27 +71,19 @@ function M.cancel_all_jobs()
   M._active_jobs = {}
 end
 
-
 -- ----------------------------------------------------------------- --
 -- Private API
 -- ----------------------------------------------------------------- --
 
 --- Execute a command asynchronously
 --- @param config        table    Plugin configuration
---- @param stdin_content string   Content to pipe to stdin
 --- @param bufnr         number   Buffer id
+--- @param on_success    function Callback on success
+--- @param on_error      function Callback on failure
 --- @return vim.SystemObj
-function M._fork_render_job(config, stdin_content, bufnr)
+function M._fork_render_job(config, bufnr, on_success, on_error)
+  local buffer_content = table.concat(api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
   local output_file = files.get_temp_file_path(config, bufnr)
-
-  local callback = function(success, image_path)
-    assert(success, "Failed to render diagram")
-
-    files.tempfiles[bufnr] = image_path
-    vim.schedule(function()
-      image_integration.render_inline(bufnr, image_path)
-    end)
-  end
 
   -- ----------------------------------------------------------------- --
   -- Build Command String
@@ -88,8 +101,8 @@ function M._fork_render_job(config, stdin_content, bufnr)
   -- Execute Command
   -- ----------------------------------------------------------------- --
   local job_opts = {
-    text = true, -- Return stdout/stderr as strings, not bytes
-    stdin = stdin_content,
+    text  = true, -- Return stdout/stderr as strings, not bytes
+    stdin = buffer_content,
   }
 
   local job = vim.system(
@@ -97,14 +110,12 @@ function M._fork_render_job(config, stdin_content, bufnr)
     job_opts,
     vim.schedule_wrap(function(result)
       if result.code == 0 then
-        status.set_status(bufnr, status.STATUS.SUCCESS)
-        utils.log_debug("Rendered diagram to " .. output_file .. ".png")
-        callback(true, output_file .. ".png")
+        on_success(output_file .. ".png")
       else
         utils.log_error("Render failed: " ..result.stdout)
         utils.log_error("Render failed: " ..result.stderr)
         status.set_status(bufnr, status.STATUS.ERROR, "Render failed")
-        callback(false, result.stderr)
+        on_error(result.stderr)
       end
 
       -- Cleanup
@@ -115,7 +126,6 @@ function M._fork_render_job(config, stdin_content, bufnr)
 
   return job -- Can be used to kill the job with job:kill()
 end
-
 
 -- ----------------------------------------------------------------- --
 -- Module Export

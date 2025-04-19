@@ -50,7 +50,7 @@ function M._setup_autocmds()
       pattern = { "*.mmd", "*.mermaid" },
       callback = utils.throttle(function()
         local bufnr = api.nvim_get_current_buf()
-        render.render_charts_in_buffer(M._config, bufnr)
+        render.render_mmd_buffer(M._config, bufnr)
       end, 500), -- Throttle to 500ms
     })
 
@@ -59,7 +59,7 @@ function M._setup_autocmds()
       pattern = { "*.mmd", "*.mermaid" },
       callback = function()
         local bufnr = api.nvim_get_current_buf()
-        render.render_charts_in_buffer(M._config, bufnr)
+        render.render_mmd_buffer(M._config, bufnr)
       end,
     })
   end
@@ -68,7 +68,7 @@ function M._setup_autocmds()
   api.nvim_create_autocmd("BufDelete", {
     group = augroup,
     callback = function(ev)
-      render.cancel_render(ev.buf)
+      render.fork_render_job(ev.buf)
       image_integration.clear_image(ev.buf, vim.api.nvim_get_current_win())
       files.tempfiles[ev.buf] = nil
     end,

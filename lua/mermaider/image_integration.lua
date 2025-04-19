@@ -6,6 +6,7 @@ local M = {}
 local api = vim.api
 local image = require("image")
 
+local files = require("mermaider.files")
 local utils = require("mermaider.utils")
 
 --- @type table<number, image.Image>
@@ -36,42 +37,43 @@ function M.clear_image(buffer, window)
 end
 
 --- Render an image inline in the current window
---- @param code_bufnr number: buffer id of the code buffer
---- @param image_path string: path to the rendered image
---- @return boolean: true if successful, false otherwise
+--- @param code_bufnr number:     buffer id of the code buffer
+--- @param image_path string|nil: path to the rendered image
 function M.render_inline(code_bufnr, image_path)
-  local current_win = api.nvim_get_current_win()
+  image_path = image_path or files.tempfiles[code_bufnr]
 
-  local line_count = api.nvim_buf_line_count(code_bufnr)
+  local windows     = utils.get_windows_by_bufnr(code_bufnr)
+  for _, win in ipairs(windows) do
+    local window_line_offset = api.nvim_win_get_position(win)[1]
+    local line_count = api.nvim_buf_line_count(code_bufnr)
 
-  local row = line_count
-  local col = 0
+    local row = line_count - window_line_offset
+    local col = 0
 
-  local win_width  = api.nvim_win_get_width(current_win)
-  local win_height = api.nvim_win_get_height(current_win)
+    local win_width  = api.nvim_win_get_width(win)
+    local win_height = api.nvim_win_get_height(win)
 
-  utils.log_debug("current_win: " .. current_win)
-  utils.log_debug("Window width: " .. win_width)
-  utils.log_debug("Window height: " .. win_height)
+    utils.log_debug("win: " .. win)
+    utils.log_debug("Window width: " .. win_width)
+    utils.log_debug("Window height: " .. win_height)
 
-  ---@type ImageOptions
-  local render_image_options = {
-    buffer = code_bufnr,
-    x = col,
-    y = row,
-    width  = win_width,
-    height = win_height,
-    with_virtual_padding = true,
-    inline = true,
-  }
+    ---@type ImageOptions
+    local render_image_options = {
+      buffer = code_bufnr,
+      window = win,
+      x = 1,
+      y = row,
+      with_virtual_padding = true,
+      inline = true,
+    }
 
-  local success = M.render_image(image_path, render_image_options)
-  if success then
-    utils.log_info("Mermaid diagram rendered inline with image.nvim")
-  else
-    utils.log_error("Failed to render inline Mermaid diagram")
+    local success = M.render_image(image_path, render_image_options)
+    if success then
+      utils.log_info("Mermaid diagram rendered inline with image.nvim")
+    else
+      utils.log_error("Failed to render inline Mermaid diagram")
+    end
   end
-  return success
 end
 
 
@@ -80,16 +82,16 @@ end
 -- ----------------------------------------------------------------- --
 
 ---@class ImageOptions
----@field buffer number: buffer id
----@field width number: width of the image
----@field height number: height of the image
----@field x number: x position of the image
----@field y number: y position of the image
+---@field buffer               number: buffer id
+---@field width                number: width of the image
+---@field height               number: height of the image
+---@field x                    number: x position of the image
+---@field y                    number: y position of the image
 ---@field with_virtual_padding boolean: whether to use virtual padding
----@field inline boolean: whether to render inline
+---@field inline               boolean: whether to render inline
 
----@param image_path string: path to the image file
----@param options ImageOptions: options for rendering the image
+---@param image_path string:       path to the image file
+---@param options    ImageOptions: options for rendering the image
 function M.render_image(image_path, options)
   assert(
     vim.fn.filereadable(image_path) == 1,
@@ -98,6 +100,9 @@ function M.render_image(image_path, options)
 
   local buf = options.buffer
   local img = M.image_objects[buf]
+
+  -- remove buffer from options
+  options.buffer = nil
 
   utils.log_debug("Rendering image for buffer " .. buf)
   utils.log_debug("Image path: " .. image_path)

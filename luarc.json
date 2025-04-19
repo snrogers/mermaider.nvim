@@ -1,10 +1,23 @@
 {
   "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
-  "runtime.version": "Lua 5.1",
-  "diagnostics.globals": ["vim"],
-  "workspace.library": [
-    "./lua",
-    "/USers/sebastian/.luarocks/share/lua/5.1"
-  ],
-  "workspace.checkThirdParty": false
+  "runtime": {
+    "version": "LuaJIT",
+    "path": ["lua/?.lua", "lua/?/init.lua"]
+  },
+  "diagnostics": {
+    "globals": ["vim"]
+  },
+  "workspace": {
+    "library": [
+      "/opt/homebrew/Cellar/neovim/0.11.0/share/nvim/runtime/lua",
+      "${3rd}/luv/library",
+      "./lua",
+      "/Users/sebastian/.luarocks/share/lua/5.1"
+    ],
+    "checkThirdParty": false,
+    "ignoreDir": ["node_modules", ".git", "spec"]
+  },
+  "telemetry": {
+    "enable": false
+  }
 }
