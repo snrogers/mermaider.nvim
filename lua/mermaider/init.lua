@@ -1,15 +1,13 @@
--- lua/mermaider/init.lua
--- Main entry point for Mermaider plugin, now focused on image.nvim
-
 local M = {}
 
 local api   = vim.api
 local image = require("image")
 
-local config_module     = require("mermaider.config")
-local render            = require("mermaider.render")
-local utils             = require("mermaider.utils")
-local files             = require("mermaider.files")
+local diagram       = require("mermaider.diagram")
+local config_module = require("mermaider.config")
+local render        = require("mermaider.render")
+local utils         = require("mermaider.utils")
+local file          = require("mermaider.file")
 
 
 -- ----------------------------------------------------------------- --
@@ -67,10 +65,11 @@ function M._setup_autocmds()
   -- On Buffer Delete
   api.nvim_create_autocmd("BufDelete", {
     group = augroup,
+    pattern = { "*.mmd", "*.mermaid" },
     callback = function(ev)
       render.fork_render_job(ev.buf)
-      image_integration.clear_image(ev.buf, vim.api.nvim_get_current_win())
-      files.tempfiles[ev.buf] = nil
+      diagram.clear_image(ev.buf, vim.api.nvim_get_current_win())
+      file.tempfiles[ev.buf] = nil
     end,
   })
 
@@ -79,7 +78,7 @@ function M._setup_autocmds()
     group = augroup,
     callback = function()
       image.clear()
-      files.cleanup_temp_files(files._tempfiles)
+      file.cleanup_temp_files(file._tempfiles)
     end,
   })
 end
@@ -90,5 +89,6 @@ function M._setup_cmds()
     render.render_charts_in_buffer(M._config, bufnr)
   end, { desc = "Render the current mermaid diagram" })
 end
+
 
 return M

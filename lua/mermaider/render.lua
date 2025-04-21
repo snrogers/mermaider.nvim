@@ -5,10 +5,10 @@ local M = {}
 
 local api = vim.api
 
-local files             = require("mermaider.files")
-local image_integration = require("mermaider.image_integration")
-local status            = require("mermaider.status")
-local utils             = require("mermaider.utils")
+local file    = require("mermaider.file")
+local diagram = require("mermaider.diagram")
+local status  = require("mermaider.status")
+local utils   = require("mermaider.utils")
 
 
 --- Table to keep track of active render jobs
@@ -29,9 +29,9 @@ function M.render_mmd_buffer(config, bufnr)
     status.set_status(bufnr, status.STATUS.SUCCESS)
     utils.log_debug("Rendered diagram to " .. image_path)
 
-    files.tempfiles[bufnr] = image_path
+    file.tempfiles[bufnr] = image_path
     vim.schedule(function()
-      image_integration.render_inline(bufnr, image_path)
+      diagram.render_inline(bufnr, image_path)
     end)
   end
 
@@ -83,7 +83,7 @@ end
 --- @return vim.SystemObj
 function M._fork_render_job(config, bufnr, on_success, on_error)
   local buffer_content = table.concat(api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
-  local output_file = files.get_temp_file_path(config, bufnr)
+  local output_file = file.get_temp_file_path(config, bufnr)
 
   -- ----------------------------------------------------------------- --
   -- Build Command String
@@ -119,7 +119,7 @@ function M._fork_render_job(config, bufnr, on_success, on_error)
       end
 
       -- Cleanup
-      files.tempfiles[bufnr] = nil
+      file.tempfiles[bufnr] = nil
       M._active_jobs[bufnr]  = nil
     end)
   )

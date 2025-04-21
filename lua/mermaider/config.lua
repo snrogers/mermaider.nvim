@@ -4,10 +4,11 @@
 local M = {}
 local fn = vim.fn
 
+
 --- Default configuration
 --- @class MermaiderConfig
-M.defaults = {
-  mermaider_cmd                = 'mmdc -o {{OUT_FILE}}.png -s 5 -i -',
+M.config = {
+  mermaider_cmd                = 'mmdc -o {{OUT_FILE}}.png -s 10 -i -',
   temp_dir                     = fn.expand('$HOME/.cache/mermaider'),
   auto_render                  = true,
   theme                        = "forest",
@@ -41,9 +42,9 @@ end
 
 -- Process user configuration
 function M.setup(user_config)
-  local config = vim.tbl_deep_extend("force", M.defaults, user_config or {})
-  M.validate(config)
-  return config
+  vim.tbl_deep_extend("force", M.config, user_config or {})
+  M.validate(M.config)
+  return M.config
 end
 
 return M

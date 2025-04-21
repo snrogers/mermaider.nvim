@@ -19,21 +19,11 @@ function M.get_temp_file_path(config, bufnr)
   local buf_name  = api.nvim_buf_get_name(bufnr)
   local file_name = fn.fnamemodify(buf_name, ":t:r")
 
-  -- Generate a hash based on the absolute path
-  local abs_path = fn.fnamemodify(buf_name, ":p")
-  local hash_sum = 0
-
-  -- Convert the absolute path to a stable hash
-  for i = 1, #abs_path do
-    hash_sum = hash_sum + string.byte(abs_path, i)
-  end
-  local hash_str = tostring(hash_sum)
-
   -- Ensure temp directory exists
   fn.mkdir(config.temp_dir, "p")
 
   -- Create full temporary file path
-  local temp_path = config.temp_dir .. path_sep .. file_name .. "_" .. hash_str
+  local temp_path = config.temp_dir .. path_sep .. file_name .. "_" .. file_name
 
   return temp_path
 end

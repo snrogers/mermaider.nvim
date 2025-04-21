@@ -1,15 +1,15 @@
--- lua/mermaider/image_integration.lua
--- Image rendering with image.nvim
+-- lua/mermaider/diagram.lua
+-- Diagram rendering with image.nvim
 
 local M = {}
 
-local api = vim.api
+local api   = vim.api
 local image = require("image")
 
-local files = require("mermaider.files")
+local file  = require("mermaider.file")
 local utils = require("mermaider.utils")
 
---- @type table<number, image.Image>
+--- @type table<number, Image>
 M.image_objects = {} -- Buffer -> image object mapping
 
 -- ----------------------------------------------------------------- --
@@ -40,7 +40,7 @@ end
 --- @param code_bufnr number:     buffer id of the code buffer
 --- @param image_path string|nil: path to the rendered image
 function M.render_inline(code_bufnr, image_path)
-  image_path = image_path or files.tempfiles[code_bufnr]
+  image_path = image_path or file.tempfiles[code_bufnr]
 
   local windows     = utils.get_windows_by_bufnr(code_bufnr)
   for _, win in ipairs(windows) do
@@ -57,17 +57,19 @@ function M.render_inline(code_bufnr, image_path)
     utils.log_debug("Window width: " .. win_width)
     utils.log_debug("Window height: " .. win_height)
 
-    ---@type ImageOptions
+    ---@type RenderImageOptions
     local render_image_options = {
       buffer = code_bufnr,
       window = win,
+      width = win_width,
+      height = win_height,
       x = 1,
       y = row,
       with_virtual_padding = true,
       inline = true,
     }
 
-    local success = M.render_image(image_path, render_image_options)
+    local success = M._render_image(image_path, render_image_options)
     if success then
       utils.log_info("Mermaid diagram rendered inline with image.nvim")
     else
@@ -81,18 +83,15 @@ end
 -- Private API
 -- ----------------------------------------------------------------- --
 
----@class ImageOptions
----@field buffer               number: buffer id
+---@class RenderImageOptions
 ---@field width                number: width of the image
 ---@field height               number: height of the image
 ---@field x                    number: x position of the image
 ---@field y                    number: y position of the image
----@field with_virtual_padding boolean: whether to use virtual padding
----@field inline               boolean: whether to render inline
 
 ---@param image_path string:       path to the image file
----@param options    ImageOptions: options for rendering the image
-function M.render_image(image_path, options)
+---@param options    RenderImageOptions: options for rendering the image
+function M._render_image(image_path, options)
   assert(
     vim.fn.filereadable(image_path) == 1,
     "Image file not readable: " .. image_path
@@ -113,7 +112,6 @@ function M.render_image(image_path, options)
     -- Update existing image
     utils.log_debug("Reusing existing image object for buffer " .. buf)
     success, err = pcall(function()
-      img.path = image_path -- TODO: I don't think this is necessary
       img:render(options)
     end)
   else
@@ -121,6 +119,8 @@ function M.render_image(image_path, options)
     utils.log_debug("Creating new image object for buffer " .. buf)
     success, err = pcall(function()
       img = image.from_file(image_path, options)
+      assert(img, "Failed to create image object")
+
       img:render(options)
       M.image_objects[buf] = img
     end)

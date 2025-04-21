@@ -56,56 +56,6 @@ function M.log_info(msg)
     M.safe_notify("[INFO] " .. msg, vim.log.levels.INFO)
 end
 
--- Log a message to Neovim command line
--- @param msg string: the message to display
--- @param level string|nil: log level (default: "INFO")
-function M.log(msg, level)
-  level = level or "INFO"
-
-  local level_str = level
-  local hl_group = "Normal"
-
-  -- Set highlight group based on level
-  if level == "ERROR" then
-    hl_group = "ErrorMsg"
-  elseif level == "WARN" then
-    hl_group = "WarningMsg"
-  elseif level == "DEBUG" then
-    hl_group = "Comment"
-  end
-
-  -- Ensure we're in a safe context
-  vim.schedule(function()
-    api.nvim_echo({{"[" .. PLUGIN_NAME .. "] " .. level_str .. ": " .. msg, hl_group}}, false, {})
-  end)
-end
-
--- Log to a debug buffer
--- @param msg string: message to log
--- @param level number: message level
-function M.log_to_buffer(msg, level)
-  -- Only create debug buffer if needed
-  if not M._debug_buf or not api.nvim_buf_is_valid(M._debug_buf) then
-    M._debug_buf = api.nvim_create_buf(false, true)
-    api.nvim_buf_set_name(M._debug_buf, "MermaiderDebug")
-    api.nvim_buf_set_option(M._debug_buf, "buftype", "nofile")
-    api.nvim_buf_set_option(M._debug_buf, "bufhidden", "hide")
-  end
-
-  -- Add timestamp to message
-  local timestamp = os.date("%H:%M:%S")
-  local level_name = "INFO"
-  if level == vim.log.levels.DEBUG then level_name = "DEBUG"
-  elseif level == vim.log.levels.WARN then level_name = "WARN"
-  elseif level == vim.log.levels.ERROR then level_name = "ERROR" end
-
-  local full_msg = string.format("[%s] [%s] %s", timestamp, level_name, msg)
-
-  -- Append to the buffer
-  local line_count = api.nvim_buf_line_count(M._debug_buf)
-  api.nvim_buf_set_lines(M._debug_buf, line_count, line_count, false, {full_msg})
-end
-
 -- Open debug buffer in a new split
 function M.open_debug_buffer()
   if not M._debug_buf or not api.nvim_buf_is_valid(M._debug_buf) then
@@ -200,35 +150,6 @@ function M.throttle(func, delay)
       timer = nil
     end))
   end
-end
-
--- Call a function safely with pcall and error logging
--- @param func function: function to call
--- @param ... any: arguments to pass to func
--- @return any: result of the function if successful, or nil on error
-function M.safe_call(func, ...)
-  local ok, result = pcall(func, ...)
-  if not ok then
-    M.safe_notify("Error: " .. tostring(result), vim.log.levels.ERROR)
-    return nil
-  end
-  return result
-end
-
--- Add a debug command to view logs
-function M.setup_debug_commands()
-  vim.api.nvim_create_user_command("MermaiderDebug", function()
-    M.open_debug_buffer()
-  end, {
-    desc = "Open Mermaider debug log"
-  })
-
-  vim.api.nvim_create_user_command("MermaiderToggleDebug", function()
-    M.debug_mode = not M.debug_mode
-    M.safe_notify("Debug mode " .. (M.debug_mode and "enabled" or "disabled"), vim.log.levels.INFO)
-  end, {
-    desc = "Toggle Mermaider debug mode"
-  })
 end
 
 return M
